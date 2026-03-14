@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🦞 LobsterMC — AI Trading Command Center</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+:root{
+  --bg:#020408;--bg1:#060b12;--bg2:#0a1020;--bg3:#0f1a2e;
+  --card:rgba(8,14,26,0.85);
+  --border:rgba(255,255,255,0.055);--border2:rgba(255,255,255,0.1);
+  --accent:#00d4ff;--accent2:#0099cc;
+  --neon:#00ffcc;--neon2:#00cc9a;
+  --red:#ff4757;--amber:#ffd32a;--amber2:#e0a800;
+  --purple:#a855f7;--purple2:#7c3aed;
+  --green:#00e676;--green2:#00b248;
+  --t0:#f0f6fc;--t1:#c9d1d9;--t2:#6e7f94;--t3:#2d3d52;
+  --r:10px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;}
+
+/* ── canvas ── */
+#bgc{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,212,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.018) 1px,transparent 1px);
+  background-size:48px 48px;}
+.orb{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0;}
+.o1{width:700px;height:700px;background:rgba(0,212,255,.055);top:-250px;left:-250px;animation:od 18s ease-in-out infinite alternate;}
+.o2{width:600px;height:600px;background:rgba(168,85,247,.04);bottom:-200px;right:-150px;animation:od 22s ease-in-out infinite alternate-reverse;}
+.o3{width:450px;height:450px;background:rgba(0,255,204,.035);top:35%;left:38%;animation:od 14s ease-in-out infinite alternate;}
+@keyframes od{from{transform:translate(0,0) scale(1)}to{transform:translate(50px,35px) scale(1.12)}}
+
+/* ── app shell ── */
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;}
+
+/* ── topbar ── */
+#tb{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;background:rgba(4,9,18,.92);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);position:relative;}
+#tb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.25),rgba(0,255,204,.2),rgba(0,212,255,.25),transparent);}
+.brand{display:flex;align-items:center;gap:11px;}
+.brand-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#001a2e,#003355);
+  border:1px solid rgba(0,212,255,.3);display:flex;align-items:center;justify-content:center;font-size:17px;
+  box-shadow:0 0 18px rgba(0,212,255,.2),inset 0 1px 0 rgba(255,255,255,.04);}
+.brand-name{font-size:14px;font-weight:700;letter-spacing:.3px;
+  background:linear-gradient(135deg,var(--t0),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.brand-tag{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--accent);padding:2px 7px;border-radius:4px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.18);}
+.nav-tabs{display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:7px;padding:3px;}
+.nt{padding:5px 15px;border-radius:5px;font-size:12px;font-weight:500;color:var(--t2);
+  cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;transition:all .15s;}
+.nt:hover{color:var(--t1);background:rgba(255,255,255,.04);}
+.nt.a{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.18);box-shadow:0 0 10px rgba(0,212,255,.08);}
+.tb-r{display:flex;align-items:center;gap:12px;}
+#clk{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2);letter-spacing:1px;}
+.live-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;
+  background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.18);}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);
+  animation:pring 1.5s ease-in-out infinite;}
+@keyframes pring{0%{box-shadow:0 0 0 0 rgba(0,230,118,.6)}70%{box-shadow:0 0 0 6px rgba(0,230,118,0)}100%{box-shadow:0 0 0 0 rgba(0,230,118,0)}}
+.live-t{font-size:11px;font-weight:600;color:var(--green);}
+.ag-t{font-size:11px;color:var(--t2);}
+
+/* ── grid ── */
+#grid{flex:1;overflow:hidden;display:grid;
+  grid-template-columns:300px 1fr 258px;
+  grid-template-rows:1fr 1fr;
+  gap:1px;background:var(--border);}
+#cp{grid-row:1/3;}
+#cs{grid-column:2;grid-row:1;}
+#cpl{grid-column:2;grid-row:2;}
+#ct{grid-column:3;grid-row:1;}
+#cm{grid-column:3;grid-row:2;}
+
+/* ── card ── */
+.card{background:var(--card);backdrop-filter:blur(20px);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 11px;
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+.ct-wrap{display:flex;align-items:center;gap:8px;}
+.ci{width:25px;height:25px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.ci.b{background:rgba(0,212,255,.1);box-shadow:0 0 8px rgba(0,212,255,.08);}
+.ci.g{background:rgba(0,230,118,.1);box-shadow:0 0 8px rgba(0,230,118,.08);}
+.ci.a{background:rgba(255,211,42,.1);box-shadow:0 0 8px rgba(255,211,42,.08);}
+.ci.p{background:rgba(168,85,247,.1);box-shadow:0 0 8px rgba(168,85,247,.08);}
+.ci.r{background:rgba(255,71,87,.1);box-shadow:0 0 8px rgba(255,71,87,.08);}
+.cl{font-size:12px;font-weight:600;color:var(--t0);}
+.cm-sub{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
+.cb{flex:1;overflow-y:auto;padding:14px 16px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent;
+  display:flex;flex-direction:column;}
+.cb::-webkit-scrollbar{width:3px;}
+.cb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px;}
+
+/* ── portfolio hero ── */
+.pf-hero{padding:14px 15px;border-radius:var(--r);margin-bottom:12px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,255,204,.04));
+  border:1px solid rgba(0,212,255,.12);}
+.pf-hero::after{content:'';position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.1),transparent 70%);}
+.pf-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px;}
+.pf-num{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--t0);}
+.pf-pnl{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;margin-top:3px;}
+.pf-pnl.up{color:var(--red);}.pf-pnl.dn{color:var(--green);}.pf-pnl.fl{color:var(--t2);}
+
+.mini-g{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px;}
+.mg{padding:9px 11px;border-radius:8px;background:rgba(255,255,255,.025);border:1px solid var(--border);}
+.mg-l{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);}
+.mg-v{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--t0);margin-top:3px;}
+
+/* ── section label ── */
+.sl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:7px;}
+
+/* ── positions ── */
+.pos{padding:10px 11px;border-radius:8px;background:rgba(255,255,255,.025);border:1px solid var(--border);
+  margin-bottom:5px;display:grid;grid-template-columns:1fr auto;gap:3px;cursor:pointer;
+  position:relative;overflow:hidden;transition:border-color .15s,background .15s;}
+.pos::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);opacity:.4;}
+.pos:hover{background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.14);}
+.pos-n{font-size:12px;font-weight:600;color:var(--t0);}
+.pos-m{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.pos-p{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;text-align:right;}
+.pos-p.up{color:var(--red);}.pos-p.dn{color:var(--green);}
+.pos-c{font-size:10px;color:var(--t3);text-align:right;font-family:'JetBrains Mono',monospace;}
+
+/* ── daily log ── */
+.dlog{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);}
+.dlog-row{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px;}
+.dlog-row:last-child{border:none;}
+.dlog-ic{font-size:12px;flex-shrink:0;}
+.dlog-t{flex:1;color:var(--t2);line-height:1.45;}
+.dlog-time{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);flex-shrink:0;margin-top:2px;}
+
+/* ── signal ── */
+.sig-banner{padding:13px 15px;border-radius:9px;margin-bottom:12px;position:relative;overflow:hidden;}
+.sig-banner.crit{background:linear-gradient(135deg,rgba(255,71,87,.08),rgba(255,71,87,.04));border:1px solid rgba(255,71,87,.2);}
+.sig-banner.high{background:linear-gradient(135deg,rgba(255,211,42,.08),rgba(255,211,42,.04));border:1px solid rgba(255,211,42,.2);}
+.sig-top{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
+.sig-badge{padding:2px 9px;border-radius:99px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.sig-badge.crit{background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3);}
+.sig-badge.high{background:rgba(255,211,42,.15);color:var(--amber);border:1px solid rgba(255,211,42,.3);}
+.sig-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);}
+.ev-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.ev-row{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:6px;
+  background:rgba(255,255,255,.02);border:1px solid var(--border);font-size:11px;color:var(--t2);line-height:1.5;}
+.ev-num{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);flex-shrink:0;margin-top:2px;}
+
+/* ── resonance ── */
+.res-row{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;margin-bottom:5px;transition:all .2s;}
+.res-row.on{background:rgba(0,255,204,.05);border:1px solid rgba(0,255,204,.15);}
+.res-row.off{background:rgba(255,255,255,.02);border:1px solid var(--border);}
+.res-ic{font-size:13px;flex-shrink:0;}
+.res-info{flex:1;}
+.res-name{font-size:11px;font-weight:600;}
+.res-name.on{color:var(--t0);}.res-name.off{color:var(--t2);}
+.res-desc{font-size:9px;color:var(--t3);margin-top:2px;}
+.res-dot{font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;}
+.res-dot.on{background:rgba(0,255,204,.1);color:var(--neon);border:1px solid rgba(0,255,204,.2);}
+.res-dot.off{background:rgba(255,255,255,.04);color:var(--t3);border:1px solid var(--border);}
+.res-total{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-top:2px;}
+.res-total.full{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);}
+.res-total.part{background:rgba(255,211,42,.05);border:1px solid rgba(255,211,42,.2);}
+.res-total.none{background:rgba(255,255,255,.02);border:1px solid var(--border);}
+.res-tlabel{font-size:11px;font-weight:600;color:var(--t0);}
+.res-tval{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;}
+.res-tval.full{color:var(--accent);}.res-tval.part{color:var(--amber);}.res-tval.none{color:var(--t3);}
+
+/* ── plan ── */
+.plan{padding:11px 13px;border-radius:9px;background:rgba(255,255,255,.025);border:1px solid var(--border);
+  margin-bottom:7px;position:relative;overflow:hidden;}
+.plan::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--accent),var(--neon));}
+.plan-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.plan-n{font-size:12px;font-weight:600;color:var(--t0);}
+.plan-code{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--t3);margin-left:5px;}
+.plan-pct{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+  padding:2px 9px;border-radius:5px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.18);color:var(--accent);}
+.plan-ps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.pp{text-align:center;}
+.pp-l{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);}
+.pp-v{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-top:3px;}
+.pp-v.ref{color:var(--t1);}.pp-v.tp{color:var(--green);}.pp-v.sl{color:var(--red);}
+
+/* ── plan market context ── */
+.mkt-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:10px;}
+.mkt-box{padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid var(--border);text-align:center;}
+.mkt-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
+.mkt-v{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-top:3px;}
+
+/* ── team ── */
+.ag-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;
+  background:rgba(255,255,255,.02);border:1px solid var(--border);margin-bottom:5px;
+  transition:all .15s;cursor:default;position:relative;overflow:hidden;}
+.ag-row:hover{background:rgba(255,255,255,.035);border-color:var(--border2);}
+.ag-row.main{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(0,255,204,.03));border-color:rgba(0,212,255,.14);}
+.ag-ava{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;background:rgba(255,255,255,.03);border:1px solid var(--border);}
+.main .ag-ava{border-color:rgba(0,212,255,.18);box-shadow:0 0 10px rgba(0,212,255,.12);}
+.ag-inf{flex:1;min-width:0;}
+.ag-n{font-size:12px;font-weight:600;color:var(--t0);}
+.ag-r{font-size:9px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ag-rt{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.stb{font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;letter-spacing:.4px;text-transform:uppercase;}
+.st-on{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.18);}
+.st-sb{background:rgba(255,211,42,.08);color:var(--amber);border:1px solid rgba(255,211,42,.18);}
+.st-off{background:rgba(255,255,255,.03);color:var(--t3);border:1px solid var(--border);}
+.ag-mdl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--t3);}
+
+/* ── mission ── */
+.prog-b{margin-bottom:10px;}
+.prog-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.prog-n{font-size:10px;color:var(--t2);}
+.prog-v{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--t0);}
+.prog-t{height:4px;background:rgba(255,255,255,.04);border-radius:99px;overflow:hidden;}
+.prog-f{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.pc{background:linear-gradient(90deg,var(--accent2),var(--accent));}
+.pg{background:linear-gradient(90deg,var(--green2),var(--green));}
+.pa{background:linear-gradient(90deg,var(--amber2),var(--amber));}
+.pp2{background:linear-gradient(90deg,var(--purple2),var(--purple));}
+.target-p{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;
+  padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid var(--border);
+  margin-bottom:12px;letter-spacing:.3px;}
+.rl-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;color:var(--t2);}
+.rl-row:last-child{border:none;}
+.rl-ic{font-size:11px;flex-shrink:0;}
+.rl-ok{font-size:9px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace;}
+.rl-na{font-size:9px;font-weight:700;color:var(--t3);font-family:'JetBrains Mono',monospace;}
+
+/* ── ticker ── */
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tkr{height:25px;overflow:hidden;flex-shrink:0;background:rgba(4,9,18,.96);
+  border-top:1px solid var(--border);display:flex;align-items:center;}
+.tkr-in{display:flex;white-space:nowrap;animation:ticker 45s linear infinite;}
+.tki{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);padding:0 22px;letter-spacing:.4px;}
+.tki .u{color:var(--red);font-weight:600;}.tki .d{color:var(--green);font-weight:600;}.tki .n{color:var(--accent);}
+
+/* ── statusbar ── */
+#sb{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;background:rgba(4,9,18,.98);border-top:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);letter-spacing:.3px;}
+.sb-l,.sb-r{display:flex;align-items:center;gap:12px;}
+.sb-i{display:flex;align-items:center;gap:4px;}
+.sb-dot{width:5px;height:5px;border-radius:50%;}
+.sb-v{color:var(--t2);}
+
+/* ── scan line ── */
+@keyframes scan{0%{top:-2%}100%{top:102%}}
+.scan{position:fixed;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.12),rgba(0,255,204,.1),rgba(0,212,255,.12),transparent);
+  pointer-events:none;z-index:999;animation:scan 10s linear infinite;}
+
+/* ── empty ── */
+.empty{color:var(--t3);font-size:11px;text-align:center;padding:20px 0;}
+
+/* ── animations ── */
+@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card{animation:fadeup .5s cubic-bezier(.4,0,.2,1) both;}
+#cp{animation-delay:.04s}#cs{animation-delay:.09s}#ct{animation-delay:.11s}
+#cpl{animation-delay:.16s}#cm{animation-delay:.2s}
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+<div class="grid-bg"></div>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="scan"></div>
+
+<div id="app">
+
+<!-- TOPBAR -->
+<div id="tb">
+  <div class="brand">
+    <div class="brand-logo">🦞</div>
+    <span class="brand-name">LobsterMC</span>
+    <span class="brand-tag">Alpha</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nt a">总览</button>
+    <button class="nt">持仓</button>
+    <button class="nt">信号</button>
+    <button class="nt">团队</button>
+  </div>
+  <div class="tb-r">
+    <span id="clk">--:--:--</span>
+    <div class="live-pill">
+      <div class="pdot"></div>
+      <span class="live-t">LIVE</span>
+      <span class="ag-t" id="ag-st">待命中</span>
+    </div>
+  </div>
+</div>
+
+<!-- GRID -->
+<div id="grid">
+
+  <!-- 左列：持仓 -->
+  <div class="card" id="cp">
+    <div class="ch">
+      <div class="ct-wrap"><div class="ci b">📊</div><span class="cl">模拟盘</span></div>
+      <span class="cm-sub" id="pf-upd">--</span>
+    </div>
+    <div class="cb">
+      <div class="pf-hero">
+        <div class="pf-lbl">TOTAL ASSETS</div>
+        <div class="pf-num" id="pf-tot">-- 万</div>
+        <div class="pf-pnl" id="pf-pnl">--</div>
+      </div>
+      <div class="mini-g">
+        <div class="mg"><div class="mg-l">现金</div><div class="mg-v" id="pf-cash">--</div></div>
+        <div class="mg"><div class="mg-l">持仓</div><div class="mg-v" id="pf-cnt">--</div></div>
+      </div>
+      <div class="sl">持仓明细</div>
+      <div id="pf-pos"><div class="empty">加载中...</div></div>
+      <!-- 今日日志 -->
+      <div class="dlog" id="dlog">
+        <div class="sl">今日动态</div>
+        <div class="dlog-row"><span class="dlog-ic">🚨</span><div class="dlog-t">T001/T002 伊以战争信号激活，霍尔木兹封锁第3周，油运标的买入计划就绪</div><span class="dlog-time">09:00</span></div>
+        <div class="dlog-row"><span class="dlog-ic">📊</span><div class="dlog-t">AlphaWhisper扫描完成：发现3只合作词标的，胜率预估74%</div><span class="dlog-time">09:15</span></div>
+        <div class="dlog-row"><span class="dlog-ic">🦞</span><div class="dlog-t">周一买入计划已生成，等待开市自动执行</div><span class="dlog-time">09:28</span></div>
+        <div class="dlog-row"><span class="dlog-ic">📡</span><div class="dlog-t">全球信号扫描完毕，宏观触发器25条，T001确认为极强</div><span class="dlog-time">15:30</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中上：信号 -->
+  <div class="card" id="cs">
+    <div class="ch">
+      <div class="ct-wrap"><div class="ci r">📡</div><span class="cl">活跃信号</span></div>
+      <span class="cm-sub" id="sig-upd">--</span>
+    </div>
+    <div class="cb"><div id="sig-c"><div class="empty">加载中...</div></div></div>
+  </div>
+
+  <!-- 右上：AI团队 -->
+  <div class="card" id="ct">
+    <div class="ch">
+      <div class="ct-wrap"><div class="ci p">🤖</div><span class="cl">AI 公司</span></div>
+      <span class="cm-sub">5 AGENTS</span>
+    </div>
+    <div class="cb">
+      <div class="ag-row main">
+        <div class="ag-ava">🦞</div>
+        <div class="ag-inf"><div class="ag-n">龙虾</div><div class="ag-r" id="ag-main-r">调度 · 策略 · 对话</div></div>
+        <div class="ag-rt"><div class="stb st-on">Online</div><div class="ag-mdl">Sonnet 4-6</div></div>
+      </div>
+      <div class="ag-row">
+        <div class="ag-ava">🐝</div>
+        <div class="ag-inf"><div class="ag-n">工蜂</div><div class="ag-r">数据 · 脚本 · AkShare</div></div>
+        <div class="ag-rt"><div class="stb st-sb">Standby</div><div class="ag-mdl">DS-V3</div></div>
+      </div>
+      <div class="ag-row">
+        <div class="ag-ava">🦉</div>
+        <div class="ag-inf"><div class="ag-n">猫头鹰</div><div class="ag-r">深度研究 · 报告</div></div>
+        <div class="ag-rt"><div class="stb st-sb">Standby</div><div class="ag-mdl">Sonnet 4-6</div></div>
+      </div>
+      <div class="ag-row">
+        <div class="ag-ava">📡</div>
+        <div class="ag-inf"><div class="ag-n">播报员</div><div class="ag-r">飞书推送 · 日报</div></div>
+        <div class="ag-rt"><div class="stb st-on">Online</div><div class="ag-mdl">DS-V3</div></div>
+      </div>
+      <div class="ag-row">
+        <div class="ag-ava">🦝</div>
+        <div class="ag-inf"><div class="ag-n">小熊猫</div><div class="ag-r">视觉 · 辅助</div></div>
+        <div class="ag-rt"><div class="stb st-off">Offline</div><div class="ag-mdl">DS-V3</div></div>
+      </div>
+      <!-- 任务队列 -->
+      <div style="margin-top:auto;padding-top:11px;border-top:1px solid var(--border);">
+        <div class="sl">近期任务</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.12);">
+            <span style="font-size:10px">✅</span>
+            <span style="font-size:10px;color:var(--t2);flex:1">全球信号扫描</span>
+            <span style="font-size:9px;color:var(--green);font-family:monospace">DONE</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);">
+            <span style="font-size:10px">⏳</span>
+            <span style="font-size:10px;color:var(--t2);flex:1">周一盘前SOP</span>
+            <span style="font-size:9px;color:var(--accent);font-family:monospace">PENDING</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid var(--border);">
+            <span style="font-size:10px">🕐</span>
+            <span style="font-size:10px;color:var(--t3);flex:1">苗头信号周报</span>
+            <span style="font-size:9px;color:var(--t3);font-family:monospace">SUN 21:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中下：计划 -->
+  <div class="card" id="cpl">
+    <div class="ch">
+      <div class="ct-wrap"><div class="ci g">🎯</div><span class="cl">待执行计划</span></div>
+      <span class="cm-sub" id="plan-cnt">-- 项</span>
+    </div>
+    <div class="cb">
+      <div id="plan-c"><div class="empty">加载中...</div></div>
+      <!-- 市场快照 -->
+      <div style="margin-top:auto;padding-top:11px;border-top:1px solid var(--border);">
+        <div class="sl">市场快照</div>
+        <div class="mkt-row" id="mkt-snap">
+          <div class="mkt-box"><div class="mkt-l">上证指数</div><div class="mkt-v" style="color:var(--green)">3,407</div></div>
+          <div class="mkt-box"><div class="mkt-l">北向资金</div><div class="mkt-v" style="color:var(--red)">+23亿</div></div>
+          <div class="mkt-box"><div class="mkt-l">VIX</div><div class="mkt-v" style="color:var(--amber)">28.4</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右下：目标&铁律 -->
+  <div class="card" id="cm">
+    <div class="ch">
+      <div class="ct-wrap"><div class="ci a">⚡</div><span class="cl">目标 &amp; 铁律</span></div>
+      <span class="cm-sub">ALL PASS</span>
+    </div>
+    <div class="cb">
+      <div class="sl">胜率进化路径</div>
+      <div class="prog-b"><div class="prog-h"><span class="prog-n">当前胜率</span><span class="prog-v">44%</span></div><div class="prog-t"><div class="prog-f pa" style="width:44%"></div></div></div>
+      <div class="prog-b"><div class="prog-h"><span class="prog-n">合作词样本</span><span class="prog-v">7 / 50</span></div><div class="prog-t"><div class="prog-f pc" style="width:14%"></div></div></div>
+      <div class="prog-b"><div class="prog-h"><span class="prog-n">触发器验证</span><span class="prog-v">1 / 25</span></div><div class="prog-t"><div class="prog-f pg" style="width:4%"></div></div></div>
+      <div class="prog-b"><div class="prog-h"><span class="prog-n">模拟盘胜率</span><span class="prog-v">56%</span></div><div class="prog-t"><div class="prog-f pp2" style="width:56%"></div></div></div>
+      <div class="target-p">44% → 65% → 70% → 80% → 90% → 99%</div>
+      <div class="sl">铁律检查</div>
+      <div class="rl-row"><span class="rl-ic">📋</span><span style="flex:1">持仓前读 portfolio.json</span><span class="rl-ok">✓ PASS</span></div>
+      <div class="rl-row"><span class="rl-ic">📉</span><span style="flex:1">大盘 &lt; -2% 禁建仓</span><span class="rl-ok">✓ PASS</span></div>
+      <div class="rl-row"><span class="rl-ic">🕊️</span><span style="flex:1">停火 → 立刻止盈</span><span class="rl-na">— 未触发</span></div>
+      <div class="rl-row"><span class="rl-ic">✈️</span><span style="flex:1">T001：航线中断才触发</span><span class="rl-ok">✓ 确认</span></div>
+      <div class="rl-row"><span class="rl-ic">🔖</span><span style="flex:1">推断必须标注【推断】</span><span class="rl-ok">✓ PASS</span></div>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- TICKER -->
+<div class="tkr">
+  <div class="tkr-in" id="tkr">
+    <span class="tki">中远海控 601919 <span class="u">+3.21%</span></span>
+    <span class="tki">招商轮船 601872 <span class="u">+2.87%</span></span>
+    <span class="tki">招商南油 601175 <span class="u">+1.54%</span></span>
+    <span class="tki">上证指数 <span class="d">-0.32%</span></span>
+    <span class="tki">深证成指 <span class="d">-0.18%</span></span>
+    <span class="tki">信号 T001/T002 <span class="n">ACTIVE · 伊以战争 · 极强</span></span>
+    <span class="tki">AlphaWhisper <span class="n">合作词胜率 74%</span></span>
+    <span class="tki">霍尔木兹 <span class="u">封锁第3周</span></span>
+    <span class="tki">模拟盘总资产 <span class="d">-2.3%</span></span>
+    <span class="tki">目标胜率 <span class="n">→ 99%</span></span>
+    <span class="tki">三层共振 <span class="n">满仓信号激活</span></span>
+    <span class="tki">中远海控 601919 <span class="u">+3.21%</span></span>
+    <span class="tki">招商轮船 601872 <span class="u">+2.87%</span></span>
+    <span class="tki">招商南油 601175 <span class="u">+1.54%</span></span>
+    <span class="tki">上证指数 <span class="d">-0.32%</span></span>
+    <span class="tki">深证成指 <span class="d">-0.18%</span></span>
+    <span class="tki">信号 T001/T002 <span class="n">ACTIVE · 伊以战争 · 极强</span></span>
+    <span class="tki">AlphaWhisper <span class="n">合作词胜率 74%</span></span>
+    <span class="tki">霍尔木兹 <span class="u">封锁第3周</span></span>
+    <span class="tki">模拟盘总资产 <span class="d">-2.3%</span></span>
+    <span class="tki">目标胜率 <span class="n">→ 99%</span></span>
+    <span class="tki">三层共振 <span class="n">满仓信号激活</span></span>
+  </div>
+</div>
+
+<!-- STATUSBAR -->
+<div id="sb">
+  <div class="sb-l">
+    <div class="sb-i"><div class="sb-dot" style="background:var(--green)"></div>SYSTEM <span class="sb-v">NOMINAL</span></div>
+    <div class="sb-i">AGENT <span class="sb-v" id="sb-ag">IDLE</span></div>
+    <div class="sb-i">SIGNAL <span class="sb-v" id="sb-sig">T001 ACTIVE</span></div>
+    <div class="sb-i">POS <span class="sb-v" id="sb-pos">--</span></div>
+    <div class="sb-i">TOTAL <span class="sb-v" id="sb-tot">--</span></div>
+  </div>
+  <div class="sb-r">
+    <div class="sb-i">🦞 LobsterMC v2.0 · AI Trading Command Center</div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+/* ── Particle Canvas ── */
+(function(){
+  const cv=document.getElementById('bgc'),ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  const C=['rgba(0,212,255,','rgba(0,255,204,','rgba(168,85,247,'];
+  function rsz(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
+  rsz();window.addEventListener('resize',rsz);
+  for(let i=0;i<55;i++) pts.push({
+    x:Math.random()*2000,y:Math.random()*1400,
+    vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,
+    r:Math.random()*1.4+.3,
+    c:C[Math.floor(Math.random()*C.length)],
+    a:Math.random()*.35+.08
+  });
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.c+p.a+')';ctx.fill();
+    });
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<110){
+        ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle=`rgba(0,212,255,${.035*(1-dist/110)})`;ctx.lineWidth=.5;ctx.stroke();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── Clock ── */
+function tick(){
+  const n=new Date();
+  document.getElementById('clk').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+}
+setInterval(tick,1000);tick();
+
+/* ── Helpers ── */
+const sign=p=>p>0?'+':'';
+const pnlCls=p=>p>0?'up':p<0?'dn':'fl';
+
+/* ── Portfolio ── */
+function renderPF(pf){
+  if(!pf)return;
+  document.getElementById('pf-tot').textContent=(pf.total/10000).toFixed(2)+'万';
+  document.getElementById('pf-cash').textContent=(pf.cash/10000).toFixed(2)+'万';
+  document.getElementById('pf-upd').textContent=(pf.updated||'').substring(0,10);
+  document.getElementById('sb-tot').textContent=(pf.total/10000).toFixed(1)+'万';
+  const pe=document.getElementById('pf-pnl');
+  pe.textContent=sign(pf.pnl_pct)+pf.pnl_pct+'%  '+(pf.pnl_pct>=0?'▲':'▼')+' '+(Math.abs((pf.total-pf.initial)/10000).toFixed(2))+'万';
+  pe.className='pf-pnl '+pnlCls(pf.pnl_pct);
+  const pos=pf.positions||{},keys=Object.keys(pos);
+  document.getElementById('pf-cnt').textContent=keys.length+' 只';
+  document.getElementById('sb-pos').textContent=keys.length;
+  const el=document.getElementById('pf-pos');
+  if(!keys.length){el.innerHTML='<div class="empty">空仓中</div>';return;}
+  el.innerHTML=keys.map(code=>{
+    const p=pos[code];
+    return `<div class="pos">
+      <div><div class="pos-n">${p.name}</div><div class="pos-m">${code} · ${Math.floor((p.shares||0)/100)}手 · 成本${p.cost}</div></div>
+      <div><div class="pos-p ${pnlCls(p.pnl_pct)}">${sign(p.pnl_pct)}${p.pnl_pct}%</div><div class="pos-c">收${p.close||'--'}</div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Signal + Resonance ── */
+function renderSIG(sig){
+  const el=document.getElementById('sig-c');
+  const cls=sig&&(sig.severity||'').toLowerCase().includes('critical')?'crit':'high';
+  document.getElementById('sig-upd').textContent=sig?(sig.updated||'').substring(0,10):'--';
+  document.getElementById('sb-sig').textContent=sig?(sig.id||'T001').replace(/_/g,' ').split(' ').slice(0,3).join('_'):'--';
+
+  const layers=[
+    {ic:'🔍',n:'苗头信号（聪明钱层）',d:'PPI回升+地缘苗头，提前3个月布局',on:!!sig},
+    {ic:'📡',n:'宏观触发（方向层）',d:'T001/T002 伊以战争 · 霍尔木兹第3周',on:!!sig},
+    {ic:'⚡',n:'AlphaWhisper（选股层）',d:'合作词胜率 74% · 找到3标的',on:!!sig},
+  ];
+  const tot=sig?3:0;
+  const resHTML=layers.map(l=>`
+    <div class="res-row ${l.on?'on':'off'}">
+      <span class="res-ic">${l.ic}</span>
+      <div class="res-info"><div class="res-name ${l.on?'on':'off'}">${l.n}</div><div class="res-desc">${l.d}</div></div>
+      <div class="res-dot ${l.on?'on':'off'}">${l.on?'● 激活':'○ 待机'}</div>
+    </div>`).join('')+
+  `<div class="res-total ${tot===3?'full':tot>=2?'part':'none'}">
+    <span class="res-tlabel">共振等级</span>
+    <span class="res-tval ${tot===3?'full':tot>=2?'part':'none'}">${tot}/3 · ${tot===3?'⚡ 满仓信号':tot>=2?'⚠ 半仓':'— 观望'}</span>
+  </div>`;
+
+  if(!sig){
+    el.innerHTML=`<div class="empty">暂无活跃信号</div><div style="margin-top:12px"><div class="sl">三层共振分析</div>${resHTML}</div>`;
+    return;
+  }
+  el.innerHTML=`
+    <div class="sig-banner ${cls}">
+      <div class="sig-top">
+        <span class="sig-badge ${cls}">${cls==='crit'?'🔴 CRITICAL':'🟠 HIGH'}</span>
+        <span class="sig-id">${(sig.id||'').replace(/_/g,' ').substring(0,30)}</span>
+      </div>
+    </div>
+    <div class="sl" style="margin-top:10px">事件摘要</div>
+    <div class="ev-list">${(sig.summary||[]).map((s,i)=>`
+      <div class="ev-row"><span class="ev-num">0${i+1}</span><span>${s}</span></div>`).join('')}
+    </div>
+    <div class="sl" style="margin-top:10px">三层共振分析</div>
+    ${resHTML}`;
+}
+
+/* ── Plan ── */
+function renderPlan(sig){
+  const el=document.getElementById('plan-c');
+  if(!sig||!(sig.plans||[]).length){el.innerHTML='<div class="empty">无待执行计划</div>';document.getElementById('plan-cnt').textContent='0 项';return;}
+  document.getElementById('plan-cnt').textContent=sig.plans.length+' 项';
+  el.innerHTML=sig.plans.map(p=>`
+    <div class="plan">
+      <div class="plan-top">
+        <div><span class="plan-n">${p.name}</span><span class="plan-code">${p.code}</span></div>
+        <div class="plan-pct">${((p.pct||0)*100).toFixed(0)}% 仓</div>
+      </div>
+      <div class="plan-ps">
+        <div class="pp"><div class="pp-l">参考价</div><div class="pp-v ref">${p.ref||'--'}</div></div>
+        <div class="pp"><div class="pp-l">止盈₁</div><div class="pp-v tp">${p.tp1||'--'}</div></div>
+        <div class="pp"><div class="pp-l">止损</div><div class="pp-v sl">${p.sl||'--'}</div></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ── Agent ── */
+function renderAG(ag){
+  if(!ag)return;
+  document.getElementById('ag-st').textContent=ag.detail||'待命中';
+  document.getElementById('ag-main-r').textContent=ag.detail||'调度 · 策略 · 对话';
+  document.getElementById('sb-ag').textContent=(ag.state||'idle').toUpperCase();
+}
+
+/* ── Fetch ── */
+async function fetchAll(){
+  try{
+    const r=await fetch('/api/status?t='+Date.now(),{cache:'no-store'});
+    const d=await r.json();
+    if(!d.ok)return;
+    renderPF(d.portfolio);renderSIG(d.signal);renderPlan(d.signal);renderAG(d.agent);
+  }catch(e){console.warn(e);}
+}
+fetchAll();setInterval(fetchAll,30000);
+</script>
+</body>
+</html>
