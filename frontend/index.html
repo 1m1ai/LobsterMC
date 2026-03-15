@@ -3,632 +3,1105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🦞 LobsterMC — AI Trading Command Center</title>
+<title>LobsterMC</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
-:root{
-  --bg:#020408;--bg1:#060b12;--bg2:#0a1020;--bg3:#0f1a2e;
-  --card:rgba(8,14,26,0.85);
-  --border:rgba(255,255,255,0.055);--border2:rgba(255,255,255,0.1);
-  --accent:#00d4ff;--accent2:#0099cc;
-  --neon:#00ffcc;--neon2:#00cc9a;
-  --red:#ff4757;--amber:#ffd32a;--amber2:#e0a800;
-  --purple:#a855f7;--purple2:#7c3aed;
-  --green:#00e676;--green2:#00b248;
-  --t0:#f0f6fc;--t1:#c9d1d9;--t2:#6e7f94;--t3:#2d3d52;
-  --r:10px;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Palette — Linear/Vercel inspired */
+  --bg:       #0a0a0a;
+  --bg1:      #111111;
+  --bg2:      #161616;
+  --bg3:      #1c1c1c;
+  --border:   rgba(255,255,255,0.08);
+  --border2:  rgba(255,255,255,0.14);
+
+  /* Brand accent — violet (not cyan) */
+  --ac:       #7c5cfc;
+  --ac-dim:   rgba(124,92,252,0.12);
+  --ac-soft:  rgba(124,92,252,0.06);
+
+  /* Semantic */
+  --green:    #22c55e;
+  --green-bg: rgba(34,197,94,0.08);
+  --red:      #ef4444;
+  --red-bg:   rgba(239,68,68,0.08);
+  --amber:    #f59e0b;
+  --amber-bg: rgba(245,158,11,0.08);
+  --blue:     #3b82f6;
+  --blue-bg:  rgba(59,130,246,0.08);
+
+  /* Text */
+  --t0: #f5f5f5;
+  --t1: #a1a1aa;
+  --t2: #71717a;
+  --t3: #3f3f46;
+
+  /* Layout */
+  --nav:  220px;
+  --top:  48px;
+  --r:    10px;
+  --r-sm: 6px;
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;}
 
-/* ── canvas ── */
-#bgc{position:fixed;inset:0;z-index:0;pointer-events:none;}
-.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:linear-gradient(rgba(0,212,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.018) 1px,transparent 1px);
-  background-size:48px 48px;}
-.orb{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0;}
-.o1{width:700px;height:700px;background:rgba(0,212,255,.055);top:-250px;left:-250px;animation:od 18s ease-in-out infinite alternate;}
-.o2{width:600px;height:600px;background:rgba(168,85,247,.04);bottom:-200px;right:-150px;animation:od 22s ease-in-out infinite alternate-reverse;}
-.o3{width:450px;height:450px;background:rgba(0,255,204,.035);top:35%;left:38%;animation:od 14s ease-in-out infinite alternate;}
-@keyframes od{from{transform:translate(0,0) scale(1)}to{transform:translate(50px,35px) scale(1.12)}}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; background:var(--bg); color:var(--t1); font-family:'Inter',sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; font-size:13px; }
 
-/* ── app shell ── */
-#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;}
+/* ─── CANVAS BG ─── */
+#bgc { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35; }
 
-/* ── topbar ── */
-#tb{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
-  padding:0 22px;background:rgba(4,9,18,.92);backdrop-filter:blur(24px);
-  border-bottom:1px solid var(--border);position:relative;}
-#tb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(0,212,255,.25),rgba(0,255,204,.2),rgba(0,212,255,.25),transparent);}
-.brand{display:flex;align-items:center;gap:11px;}
-.brand-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#001a2e,#003355);
-  border:1px solid rgba(0,212,255,.3);display:flex;align-items:center;justify-content:center;font-size:17px;
-  box-shadow:0 0 18px rgba(0,212,255,.2),inset 0 1px 0 rgba(255,255,255,.04);}
-.brand-name{font-size:14px;font-weight:700;letter-spacing:.3px;
-  background:linear-gradient(135deg,var(--t0),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.brand-tag{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--accent);padding:2px 7px;border-radius:4px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.18);}
-.nav-tabs{display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:7px;padding:3px;}
-.nt{padding:5px 15px;border-radius:5px;font-size:12px;font-weight:500;color:var(--t2);
-  cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;transition:all .15s;}
-.nt:hover{color:var(--t1);background:rgba(255,255,255,.04);}
-.nt.a{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.18);box-shadow:0 0 10px rgba(0,212,255,.08);}
-.tb-r{display:flex;align-items:center;gap:12px;}
-#clk{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2);letter-spacing:1px;}
-.live-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;
-  background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.18);}
-.pdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);
-  animation:pring 1.5s ease-in-out infinite;}
-@keyframes pring{0%{box-shadow:0 0 0 0 rgba(0,230,118,.6)}70%{box-shadow:0 0 0 6px rgba(0,230,118,0)}100%{box-shadow:0 0 0 0 rgba(0,230,118,0)}}
-.live-t{font-size:11px;font-weight:600;color:var(--green);}
-.ag-t{font-size:11px;color:var(--t2);}
+/* ─── SHELL ─── */
+#app { position:relative; z-index:1; display:flex; height:100vh; }
 
-/* ── grid ── */
-#grid{flex:1;overflow:hidden;display:grid;
-  grid-template-columns:300px 1fr 258px;
-  grid-template-rows:1fr 1fr;
-  gap:1px;background:var(--border);}
-#cp{grid-row:1/3;}
-#cs{grid-column:2;grid-row:1;}
-#cpl{grid-column:2;grid-row:2;}
-#ct{grid-column:3;grid-row:1;}
-#cm{grid-column:3;grid-row:2;}
+/* ─── SIDEBAR ─── */
+#nav {
+  width:var(--nav); flex-shrink:0;
+  background:var(--bg);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  overflow-y:auto; overflow-x:hidden;
+  scrollbar-width:none;
+}
+#nav::-webkit-scrollbar { display:none; }
 
-/* ── card ── */
-.card{background:var(--card);backdrop-filter:blur(20px);display:flex;flex-direction:column;overflow:hidden;position:relative;}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);}
-.ch{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 11px;
-  border-bottom:1px solid var(--border);flex-shrink:0;}
-.ct-wrap{display:flex;align-items:center;gap:8px;}
-.ci{width:25px;height:25px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}
-.ci.b{background:rgba(0,212,255,.1);box-shadow:0 0 8px rgba(0,212,255,.08);}
-.ci.g{background:rgba(0,230,118,.1);box-shadow:0 0 8px rgba(0,230,118,.08);}
-.ci.a{background:rgba(255,211,42,.1);box-shadow:0 0 8px rgba(255,211,42,.08);}
-.ci.p{background:rgba(168,85,247,.1);box-shadow:0 0 8px rgba(168,85,247,.08);}
-.ci.r{background:rgba(255,71,87,.1);box-shadow:0 0 8px rgba(255,71,87,.08);}
-.cl{font-size:12px;font-weight:600;color:var(--t0);}
-.cm-sub{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
-.cb{flex:1;overflow-y:auto;padding:14px 16px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent;
-  display:flex;flex-direction:column;}
-.cb::-webkit-scrollbar{width:3px;}
-.cb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px;}
+.nav-header {
+  padding:16px 14px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+  flex-shrink:0;
+}
+.nav-logo {
+  width:28px; height:28px; border-radius:7px;
+  background:linear-gradient(135deg, #4f35c0, var(--ac));
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; flex-shrink:0;
+}
+.nav-brand { font-size:13px; font-weight:600; color:var(--t0); }
+.nav-version { font-size:10px; color:var(--t3); font-family:'JetBrains Mono',monospace; }
 
-/* ── portfolio hero ── */
-.pf-hero{padding:14px 15px;border-radius:var(--r);margin-bottom:12px;position:relative;overflow:hidden;
-  background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,255,204,.04));
-  border:1px solid rgba(0,212,255,.12);}
-.pf-hero::after{content:'';position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;
-  background:radial-gradient(circle,rgba(0,212,255,.1),transparent 70%);}
-.pf-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px;}
-.pf-num{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--t0);}
-.pf-pnl{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;margin-top:3px;}
-.pf-pnl.up{color:var(--red);}.pf-pnl.dn{color:var(--green);}.pf-pnl.fl{color:var(--t2);}
+.nav-section { padding:16px 10px 4px; }
+.nav-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--t3); padding:0 6px; margin-bottom:2px; }
 
-.mini-g{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px;}
-.mg{padding:9px 11px;border-radius:8px;background:rgba(255,255,255,.025);border:1px solid var(--border);}
-.mg-l{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);}
-.mg-v{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--t0);margin-top:3px;}
+.nav-item {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 8px; margin:1px 0; border-radius:var(--r-sm);
+  font-size:12px; font-weight:500; color:var(--t2);
+  cursor:pointer; transition:all .1s; user-select:none;
+  position:relative;
+}
+.nav-item:hover { background:rgba(255,255,255,.05); color:var(--t1); }
+.nav-item.active { background:rgba(255,255,255,.07); color:var(--t0); }
+.nav-item .ni-icon { font-size:13px; flex-shrink:0; opacity:.7; }
+.nav-item.active .ni-icon { opacity:1; }
+.nav-badge {
+  margin-left:auto; font-size:9px; font-weight:700;
+  padding:1px 6px; border-radius:99px;
+  background:var(--red-bg); color:var(--red);
+}
+.nav-badge.green { background:var(--green-bg); color:var(--green); }
+.nav-badge.blue { background:var(--blue-bg); color:var(--blue); }
 
-/* ── section label ── */
-.sl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:7px;}
+.nav-footer {
+  margin-top:auto; padding:12px 10px;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.agent-pill {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:var(--r-sm);
+  background:var(--bg2); border:1px solid var(--border);
+}
+.agent-pill-av { font-size:16px; }
+.agent-pill-name { font-size:11px; font-weight:600; color:var(--t0); }
+.agent-pill-state { font-size:10px; color:var(--t2); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.status-dot { width:6px; height:6px; border-radius:50%; background:var(--green); margin-left:auto; flex-shrink:0; }
 
-/* ── positions ── */
-.pos{padding:10px 11px;border-radius:8px;background:rgba(255,255,255,.025);border:1px solid var(--border);
-  margin-bottom:5px;display:grid;grid-template-columns:1fr auto;gap:3px;cursor:pointer;
-  position:relative;overflow:hidden;transition:border-color .15s,background .15s;}
-.pos::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);opacity:.4;}
-.pos:hover{background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.14);}
-.pos-n{font-size:12px;font-weight:600;color:var(--t0);}
-.pos-m{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:2px;}
-.pos-p{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;text-align:right;}
-.pos-p.up{color:var(--red);}.pos-p.dn{color:var(--green);}
-.pos-c{font-size:10px;color:var(--t3);text-align:right;font-family:'JetBrains Mono',monospace;}
+/* ─── TOPBAR ─── */
+#topbar {
+  position:fixed; left:var(--nav); right:0; top:0; height:var(--top); z-index:50;
+  background:rgba(10,10,10,.95); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+}
+.tb-breadcrumb { display:flex; align-items:center; gap:8px; }
+.tb-title { font-size:13px; font-weight:500; color:var(--t0); }
+.tb-sep { color:var(--t3); font-size:12px; }
+.tb-sub { font-size:12px; color:var(--t2); }
+.tb-right { display:flex; align-items:center; gap:10px; }
+#clk { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--t2); }
+.status-pill {
+  display:flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:99px;
+  background:var(--bg2); border:1px solid var(--border);
+  font-size:11px; color:var(--t1);
+}
+.status-pill .dot { width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0; }
 
-/* ── daily log ── */
-.dlog{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);}
-.dlog-row{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px;}
-.dlog-row:last-child{border:none;}
-.dlog-ic{font-size:12px;flex-shrink:0;}
-.dlog-t{flex:1;color:var(--t2);line-height:1.45;}
-.dlog-time{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);flex-shrink:0;margin-top:2px;}
+/* ─── MAIN ─── */
+#main { flex:1; overflow:hidden; display:flex; flex-direction:column; padding-top:var(--top); }
 
-/* ── signal ── */
-.sig-banner{padding:13px 15px;border-radius:9px;margin-bottom:12px;position:relative;overflow:hidden;}
-.sig-banner.crit{background:linear-gradient(135deg,rgba(255,71,87,.08),rgba(255,71,87,.04));border:1px solid rgba(255,71,87,.2);}
-.sig-banner.high{background:linear-gradient(135deg,rgba(255,211,42,.08),rgba(255,211,42,.04));border:1px solid rgba(255,211,42,.2);}
-.sig-top{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
-.sig-badge{padding:2px 9px;border-radius:99px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
-.sig-badge.crit{background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3);}
-.sig-badge.high{background:rgba(255,211,42,.15);color:var(--amber);border:1px solid rgba(255,211,42,.3);}
-.sig-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);}
-.ev-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
-.ev-row{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:6px;
-  background:rgba(255,255,255,.02);border:1px solid var(--border);font-size:11px;color:var(--t2);line-height:1.5;}
-.ev-num{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);flex-shrink:0;margin-top:2px;}
+.page { display:none; flex:1; overflow-y:auto; padding:20px 22px 16px; flex-direction:column; gap:16px;
+  scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+.page.active { display:flex; }
+.page::-webkit-scrollbar { width:3px; }
+.page::-webkit-scrollbar-thumb { background:var(--border2); border-radius:99px; }
 
-/* ── resonance ── */
-.res-row{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;margin-bottom:5px;transition:all .2s;}
-.res-row.on{background:rgba(0,255,204,.05);border:1px solid rgba(0,255,204,.15);}
-.res-row.off{background:rgba(255,255,255,.02);border:1px solid var(--border);}
-.res-ic{font-size:13px;flex-shrink:0;}
-.res-info{flex:1;}
-.res-name{font-size:11px;font-weight:600;}
-.res-name.on{color:var(--t0);}.res-name.off{color:var(--t2);}
-.res-desc{font-size:9px;color:var(--t3);margin-top:2px;}
-.res-dot{font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;}
-.res-dot.on{background:rgba(0,255,204,.1);color:var(--neon);border:1px solid rgba(0,255,204,.2);}
-.res-dot.off{background:rgba(255,255,255,.04);color:var(--t3);border:1px solid var(--border);}
-.res-total{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-top:2px;}
-.res-total.full{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);}
-.res-total.part{background:rgba(255,211,42,.05);border:1px solid rgba(255,211,42,.2);}
-.res-total.none{background:rgba(255,255,255,.02);border:1px solid var(--border);}
-.res-tlabel{font-size:11px;font-weight:600;color:var(--t0);}
-.res-tval{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;}
-.res-tval.full{color:var(--accent);}.res-tval.part{color:var(--amber);}.res-tval.none{color:var(--t3);}
+/* ─── TICKER ─── */
+#ticker {
+  height:26px; flex-shrink:0;
+  background:var(--bg); border-top:1px solid var(--border);
+  display:flex; align-items:center; overflow:hidden;
+}
+@keyframes tkr { from { transform:translateX(0) } to { transform:translateX(-50%) } }
+.ticker-inner { display:flex; white-space:nowrap; animation:tkr 60s linear infinite; }
+.tick-item { font-family:'JetBrains Mono',monospace; font-size:10px; padding:0 24px; color:var(--t3); letter-spacing:.3px; }
+.tick-item .up { color:var(--red); font-weight:600; }
+.tick-item .dn { color:var(--green); font-weight:600; }
+.tick-item .sym { color:var(--t1); }
 
-/* ── plan ── */
-.plan{padding:11px 13px;border-radius:9px;background:rgba(255,255,255,.025);border:1px solid var(--border);
-  margin-bottom:7px;position:relative;overflow:hidden;}
-.plan::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:linear-gradient(180deg,var(--accent),var(--neon));}
-.plan-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
-.plan-n{font-size:12px;font-weight:600;color:var(--t0);}
-.plan-code{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--t3);margin-left:5px;}
-.plan-pct{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
-  padding:2px 9px;border-radius:5px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.18);color:var(--accent);}
-.plan-ps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-.pp{text-align:center;}
-.pp-l{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);}
-.pp-v{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-top:3px;}
-.pp-v.ref{color:var(--t1);}.pp-v.tp{color:var(--green);}.pp-v.sl{color:var(--red);}
+/* ─── LAYOUT ─── */
+.row { display:flex; gap:14px; }
+.col { display:flex; flex-direction:column; gap:14px; flex:1; }
+.col-2 { flex:2; }
+.col-3 { flex:3; }
 
-/* ── plan market context ── */
-.mkt-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:10px;}
-.mkt-box{padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid var(--border);text-align:center;}
-.mkt-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
-.mkt-v{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-top:3px;}
+/* ─── CARD ─── */
+.card {
+  background:var(--bg1);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden; flex-shrink:0;
+}
+.card-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px 10px;
+  border-bottom:1px solid var(--border);
+}
+.card-title-wrap { display:flex; align-items:center; gap:8px; }
+.card-icon {
+  width:22px; height:22px; border-radius:5px;
+  display:flex; align-items:center; justify-content:center; font-size:11px;
+  background:var(--bg3); flex-shrink:0;
+}
+.card-title { font-size:12px; font-weight:600; color:var(--t0); }
+.card-meta { font-size:11px; color:var(--t3); font-family:'JetBrains Mono',monospace; }
+.card-body { padding:14px 16px; }
 
-/* ── team ── */
-.ag-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;
-  background:rgba(255,255,255,.02);border:1px solid var(--border);margin-bottom:5px;
-  transition:all .15s;cursor:default;position:relative;overflow:hidden;}
-.ag-row:hover{background:rgba(255,255,255,.035);border-color:var(--border2);}
-.ag-row.main{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(0,255,204,.03));border-color:rgba(0,212,255,.14);}
-.ag-ava{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;background:rgba(255,255,255,.03);border:1px solid var(--border);}
-.main .ag-ava{border-color:rgba(0,212,255,.18);box-shadow:0 0 10px rgba(0,212,255,.12);}
-.ag-inf{flex:1;min-width:0;}
-.ag-n{font-size:12px;font-weight:600;color:var(--t0);}
-.ag-r{font-size:9px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ag-rt{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
-.stb{font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;letter-spacing:.4px;text-transform:uppercase;}
-.st-on{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.18);}
-.st-sb{background:rgba(255,211,42,.08);color:var(--amber);border:1px solid rgba(255,211,42,.18);}
-.st-off{background:rgba(255,255,255,.03);color:var(--t3);border:1px solid var(--border);}
-.ag-mdl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--t3);}
+/* ─── KPI GRID ─── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.kpi {
+  background:var(--bg1); border:1px solid var(--border); border-radius:var(--r);
+  padding:14px 16px; position:relative; overflow:hidden;
+}
+.kpi-label { font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--t3); margin-bottom:6px; }
+.kpi-value { font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600; color:var(--t0); line-height:1; }
+.kpi-sub { font-size:10px; margin-top:5px; color:var(--t2); font-family:'JetBrains Mono',monospace; }
+.kpi-sub.up { color:var(--red); }
+.kpi-sub.dn { color:var(--green); }
+.kpi-sub.ac { color:var(--ac); }
 
-/* ── mission ── */
-.prog-b{margin-bottom:10px;}
-.prog-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
-.prog-n{font-size:10px;color:var(--t2);}
-.prog-v{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--t0);}
-.prog-t{height:4px;background:rgba(255,255,255,.04);border-radius:99px;overflow:hidden;}
-.prog-f{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1);}
-.pc{background:linear-gradient(90deg,var(--accent2),var(--accent));}
-.pg{background:linear-gradient(90deg,var(--green2),var(--green));}
-.pa{background:linear-gradient(90deg,var(--amber2),var(--amber));}
-.pp2{background:linear-gradient(90deg,var(--purple2),var(--purple));}
-.target-p{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;
-  padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid var(--border);
-  margin-bottom:12px;letter-spacing:.3px;}
-.rl-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;color:var(--t2);}
-.rl-row:last-child{border:none;}
-.rl-ic{font-size:11px;flex-shrink:0;}
-.rl-ok{font-size:9px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace;}
-.rl-na{font-size:9px;font-weight:700;color:var(--t3);font-family:'JetBrains Mono',monospace;}
+/* ─── BADGE ─── */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:2px 8px; border-radius:99px;
+  font-size:10px; font-weight:600; letter-spacing:.3px;
+}
+.badge-red   { background:var(--red-bg);   color:var(--red);   border:1px solid rgba(239,68,68,.15); }
+.badge-green { background:var(--green-bg); color:var(--green); border:1px solid rgba(34,197,94,.15); }
+.badge-amber { background:var(--amber-bg); color:var(--amber); border:1px solid rgba(245,158,11,.15); }
+.badge-blue  { background:var(--blue-bg);  color:var(--blue);  border:1px solid rgba(59,130,246,.15); }
+.badge-ac    { background:var(--ac-dim);   color:var(--ac);    border:1px solid rgba(124,92,252,.2); }
+.badge-ghost { background:rgba(255,255,255,.04); color:var(--t2); border:1px solid var(--border); }
 
-/* ── ticker ── */
-@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.tkr{height:25px;overflow:hidden;flex-shrink:0;background:rgba(4,9,18,.96);
-  border-top:1px solid var(--border);display:flex;align-items:center;}
-.tkr-in{display:flex;white-space:nowrap;animation:ticker 45s linear infinite;}
-.tki{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);padding:0 22px;letter-spacing:.4px;}
-.tki .u{color:var(--red);font-weight:600;}.tki .d{color:var(--green);font-weight:600;}.tki .n{color:var(--accent);}
+/* ─── STATUS BADGE ─── */
+.st { font-size:10px; font-weight:600; padding:2px 7px; border-radius:99px; text-transform:uppercase; letter-spacing:.3px; }
+.st-on  { background:var(--green-bg); color:var(--green); border:1px solid rgba(34,197,94,.15); }
+.st-sb  { background:var(--amber-bg); color:var(--amber); border:1px solid rgba(245,158,11,.15); }
+.st-off { background:rgba(255,255,255,.04); color:var(--t3); border:1px solid var(--border); }
 
-/* ── statusbar ── */
-#sb{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;background:rgba(4,9,18,.98);border-top:1px solid var(--border);
-  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);letter-spacing:.3px;}
-.sb-l,.sb-r{display:flex;align-items:center;gap:12px;}
-.sb-i{display:flex;align-items:center;gap:4px;}
-.sb-dot{width:5px;height:5px;border-radius:50%;}
-.sb-v{color:var(--t2);}
+/* ─── SIGNAL ─── */
+.signal-card {
+  padding:12px 14px; border-radius:var(--r-sm); margin-bottom:8px;
+}
+.signal-card.crit { background:rgba(239,68,68,.05); border:1px solid rgba(239,68,68,.14); }
+.signal-card.high { background:rgba(245,158,11,.04); border:1px solid rgba(245,158,11,.12); }
+.signal-top { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.signal-id { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--t2); }
+.signal-desc { font-size:11px; color:var(--t1); line-height:1.6; }
 
-/* ── scan line ── */
-@keyframes scan{0%{top:-2%}100%{top:102%}}
-.scan{position:fixed;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(0,212,255,.12),rgba(0,255,204,.1),rgba(0,212,255,.12),transparent);
-  pointer-events:none;z-index:999;animation:scan 10s linear infinite;}
+/* ─── RESONANCE ─── */
+.res-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:var(--r-sm); margin-bottom:5px;
+}
+.res-item.on  { background:rgba(34,197,94,.05);  border:1px solid rgba(34,197,94,.12); }
+.res-item.off { background:var(--bg2);            border:1px solid var(--border); }
+.res-icon { font-size:14px; flex-shrink:0; }
+.res-info { flex:1; }
+.res-name { font-size:11px; font-weight:600; }
+.res-name.on { color:var(--t0); } .res-name.off { color:var(--t2); }
+.res-detail { font-size:10px; color:var(--t3); margin-top:2px; }
+.res-total {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; border-radius:var(--r-sm); margin-top:6px;
+  background:var(--ac-soft); border:1px solid rgba(124,92,252,.15);
+}
 
-/* ── empty ── */
-.empty{color:var(--t3);font-size:11px;text-align:center;padding:20px 0;}
+/* ─── POSITION ROWS ─── */
+.pos-row {
+  display:flex; align-items:center; padding:10px 12px; border-radius:var(--r-sm);
+  background:var(--bg2); border:1px solid var(--border);
+  cursor:pointer; transition:background .1s; margin-bottom:5px;
+}
+.pos-row:hover { background:var(--bg3); }
+.pos-row-left { flex:1; }
+.pos-name { font-size:12px; font-weight:600; color:var(--t0); }
+.pos-code { font-size:10px; color:var(--t3); font-family:'JetBrains Mono',monospace; margin-top:1px; }
+.pos-right { text-align:right; }
+.pos-pnl { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }
+.pos-pnl.up { color:var(--red); } .pos-pnl.dn { color:var(--green); }
+.pos-cost { font-size:10px; color:var(--t3); margin-top:1px; font-family:'JetBrains Mono',monospace; }
 
-/* ── animations ── */
-@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.card{animation:fadeup .5s cubic-bezier(.4,0,.2,1) both;}
-#cp{animation-delay:.04s}#cs{animation-delay:.09s}#ct{animation-delay:.11s}
-#cpl{animation-delay:.16s}#cm{animation-delay:.2s}
+/* ─── TABLE ─── */
+.tbl-head { display:grid; padding:6px 0; border-bottom:1px solid var(--border); margin-bottom:2px; }
+.tbl-head span { font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--t3); font-weight:500; }
+.tbl-head span:not(:first-child) { text-align:right; }
+.tbl-row { display:grid; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.04); align-items:center; }
+.tbl-row:last-child { border:none; }
+.tbl-row span { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--t1); }
+.tbl-row span:not(:first-child) { text-align:right; }
+
+/* ─── PLAN CARD ─── */
+.plan-item {
+  padding:12px 14px; border-radius:var(--r-sm);
+  background:var(--bg2); border:1px solid var(--border);
+  margin-bottom:8px;
+}
+.plan-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.plan-name { font-size:12px; font-weight:600; color:var(--t0); }
+.plan-code { font-size:10px; color:var(--t3); font-family:'JetBrains Mono',monospace; margin-left:5px; }
+.plan-prices { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.price-cell { text-align:center; padding:6px; border-radius:5px; background:var(--bg3); }
+.price-label { font-size:9px; text-transform:uppercase; letter-spacing:.4px; color:var(--t3); }
+.price-value { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; margin-top:2px; }
+.price-value.ref { color:var(--t1); }
+.price-value.tp  { color:var(--green); }
+.price-value.sl  { color:var(--red); }
+
+/* ─── PROGRESS ─── */
+.prog { margin-bottom:10px; }
+.prog-header { display:flex; justify-content:space-between; margin-bottom:4px; }
+.prog-name { font-size:11px; color:var(--t2); }
+.prog-val { font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--t0); }
+.prog-track { height:3px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; }
+.prog-fill { height:100%; border-radius:99px; }
+.pf-ac     { background:var(--ac); }
+.pf-green  { background:var(--green); }
+.pf-amber  { background:var(--amber); }
+.pf-blue   { background:var(--blue); }
+
+/* ─── RULE LIST ─── */
+.rule-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 0; border-bottom:1px solid rgba(255,255,255,.05);
+  font-size:11px; color:var(--t2);
+}
+.rule-item:last-child { border:none; }
+.rule-status { margin-left:auto; font-size:10px; font-weight:600; font-family:'JetBrains Mono',monospace; }
+.rule-ok { color:var(--green); }
+.rule-na { color:var(--t3); }
+
+/* ─── AGENT CARD ─── */
+.agent-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.agent-card {
+  padding:14px; border-radius:var(--r);
+  background:var(--bg2); border:1px solid var(--border);
+  display:flex; gap:12px; transition:border-color .1s;
+}
+.agent-card:hover { border-color:var(--border2); }
+.agent-card.main { border-color:rgba(124,92,252,.2); background:rgba(124,92,252,.04); }
+.agent-av {
+  width:38px; height:38px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:700; flex-shrink:0;
+  background:var(--bg3); border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; color:var(--t0);
+  letter-spacing:0;
+}
+.agent-card.main .agent-av { border-color:rgba(124,92,252,.25); }
+.agent-body { flex:1; min-width:0; }
+.agent-name { font-size:12px; font-weight:600; color:var(--t0); }
+.agent-role { font-size:10px; color:var(--t3); margin-top:2px; }
+.agent-model { font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--t2); margin-top:5px; }
+.agent-footer { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+.agent-task { font-size:10px; color:var(--t3); }
+
+/* ─── ACTIVITY FEED ─── */
+.feed-item { display:flex; gap:11px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.feed-item:last-child { border:none; }
+.feed-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.feed-body { flex:1; }
+.feed-text { font-size:11px; color:var(--t1); line-height:1.6; }
+.feed-meta { font-size:10px; color:var(--t3); font-family:'JetBrains Mono',monospace; margin-top:3px; }
+
+/* ─── BAR LIST ─── */
+.bar-item { display:flex; align-items:center; gap:10px; padding:6px 0; }
+.bar-name { font-size:11px; color:var(--t1); flex:1; }
+.bar-track { flex:2; height:3px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:99px; }
+.bar-val { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--t2); min-width:56px; text-align:right; }
+
+/* ─── CRON ROW ─── */
+.cron-row {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:var(--r-sm);
+  background:var(--bg2); border:1px solid var(--border);
+  margin-bottom:5px;
+}
+.cron-name { flex:1; font-size:11px; color:var(--t1); }
+.cron-sched { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--t3); }
+
+/* ─── TASK ROW ─── */
+.task-row {
+  display:flex; align-items:center; gap:9px;
+  padding:8px 12px; border-radius:var(--r-sm);
+  background:var(--bg2); border:1px solid var(--border);
+  margin-bottom:5px;
+}
+.task-icon { font-size:12px; flex-shrink:0; }
+.task-text { flex:1; font-size:11px; color:var(--t1); }
+.task-agent { font-size:12px; flex-shrink:0; }
+
+.ts { font-size:9px; font-weight:600; font-family:'JetBrains Mono',monospace; padding:2px 6px; border-radius:4px; }
+.ts-done { background:var(--green-bg); color:var(--green); }
+.ts-pd   { background:var(--blue-bg);  color:var(--blue); }
+.ts-wt   { background:rgba(255,255,255,.04); color:var(--t3); }
+
+/* ─── SECTION LABEL ─── */
+.section-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--t3); margin-bottom:8px; }
+.divider { height:1px; background:var(--border); margin:12px 0; }
+
+/* ─── EMPTY ─── */
+.empty { color:var(--t3); font-size:11px; text-align:center; padding:24px; }
+
+/* ─── ENTER ANIMATION ─── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+.page.active > * { animation:fadeUp .25s ease both; }
+.page.active > *:nth-child(1) { animation-delay:.02s }
+.page.active > *:nth-child(2) { animation-delay:.06s }
+.page.active > *:nth-child(3) { animation-delay:.10s }
+.page.active > *:nth-child(4) { animation-delay:.14s }
 </style>
 </head>
 <body>
+
 <canvas id="bgc"></canvas>
-<div class="grid-bg"></div>
-<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
-<div class="scan"></div>
 
 <div id="app">
 
-<!-- TOPBAR -->
-<div id="tb">
-  <div class="brand">
-    <div class="brand-logo">🦞</div>
-    <span class="brand-name">LobsterMC</span>
-    <span class="brand-tag">Alpha</span>
-  </div>
-  <div class="nav-tabs">
-    <button class="nt a">总览</button>
-    <button class="nt">持仓</button>
-    <button class="nt">信号</button>
-    <button class="nt">团队</button>
-  </div>
-  <div class="tb-r">
-    <span id="clk">--:--:--</span>
-    <div class="live-pill">
-      <div class="pdot"></div>
-      <span class="live-t">LIVE</span>
-      <span class="ag-t" id="ag-st">待命中</span>
-    </div>
-  </div>
-</div>
-
-<!-- GRID -->
-<div id="grid">
-
-  <!-- 左列：持仓 -->
-  <div class="card" id="cp">
-    <div class="ch">
-      <div class="ct-wrap"><div class="ci b">📊</div><span class="cl">模拟盘</span></div>
-      <span class="cm-sub" id="pf-upd">--</span>
-    </div>
-    <div class="cb">
-      <div class="pf-hero">
-        <div class="pf-lbl">TOTAL ASSETS</div>
-        <div class="pf-num" id="pf-tot">-- 万</div>
-        <div class="pf-pnl" id="pf-pnl">--</div>
-      </div>
-      <div class="mini-g">
-        <div class="mg"><div class="mg-l">现金</div><div class="mg-v" id="pf-cash">--</div></div>
-        <div class="mg"><div class="mg-l">持仓</div><div class="mg-v" id="pf-cnt">--</div></div>
-      </div>
-      <div class="sl">持仓明细</div>
-      <div id="pf-pos"><div class="empty">加载中...</div></div>
-      <!-- 今日日志 -->
-      <div class="dlog" id="dlog">
-        <div class="sl">今日动态</div>
-        <div class="dlog-row"><span class="dlog-ic">🚨</span><div class="dlog-t">T001/T002 伊以战争信号激活，霍尔木兹封锁第3周，油运标的买入计划就绪</div><span class="dlog-time">09:00</span></div>
-        <div class="dlog-row"><span class="dlog-ic">📊</span><div class="dlog-t">AlphaWhisper扫描完成：发现3只合作词标的，胜率预估74%</div><span class="dlog-time">09:15</span></div>
-        <div class="dlog-row"><span class="dlog-ic">🦞</span><div class="dlog-t">周一买入计划已生成，等待开市自动执行</div><span class="dlog-time">09:28</span></div>
-        <div class="dlog-row"><span class="dlog-ic">📡</span><div class="dlog-t">全球信号扫描完毕，宏观触发器25条，T001确认为极强</div><span class="dlog-time">15:30</span></div>
-      </div>
+<!-- ══ SIDEBAR ══ -->
+<nav id="nav">
+  <div class="nav-header">
+    <div class="nav-logo">🦞</div>
+    <div>
+      <div class="nav-brand">LobsterMC</div>
+      <div class="nav-version">v2.0</div>
     </div>
   </div>
 
-  <!-- 中上：信号 -->
-  <div class="card" id="cs">
-    <div class="ch">
-      <div class="ct-wrap"><div class="ci r">📡</div><span class="cl">活跃信号</span></div>
-      <span class="cm-sub" id="sig-upd">--</span>
-    </div>
-    <div class="cb"><div id="sig-c"><div class="empty">加载中...</div></div></div>
+  <div class="nav-section">
+    <div class="nav-label">核心</div>
+    <div class="nav-item active" onclick="nav('overview')"><span class="ni-icon">⬡</span> 总览</div>
+    <div class="nav-item" onclick="nav('portfolio')"><span class="ni-icon">📊</span> 持仓 <span class="nav-badge green" id="nb-pos">3</span></div>
+    <div class="nav-item" onclick="nav('signals')"><span class="ni-icon">📡</span> 信号 <span class="nav-badge" id="nb-sig">CRIT</span></div>
+    <div class="nav-item" onclick="nav('agents')"><span class="ni-icon">🤖</span> AI 公司 <span class="nav-badge blue">5</span></div>
   </div>
 
-  <!-- 右上：AI团队 -->
-  <div class="card" id="ct">
-    <div class="ch">
-      <div class="ct-wrap"><div class="ci p">🤖</div><span class="cl">AI 公司</span></div>
-      <span class="cm-sub">5 AGENTS</span>
+  <div class="nav-section">
+    <div class="nav-label">监控</div>
+    <div class="nav-item" onclick="nav('activity')"><span class="ni-icon">⚡</span> 活动流</div>
+    <div class="nav-item" onclick="nav('cost')"><span class="ni-icon">💰</span> Token 用量</div>
+    <div class="nav-item" onclick="nav('tasks')"><span class="ni-icon">📋</span> 任务队列</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">自动化</div>
+    <div class="nav-item" onclick="nav('cron')"><span class="ni-icon">🕐</span> 定时任务</div>
+    <div class="nav-item" onclick="nav('strategy')"><span class="ni-icon">🧠</span> 策略引擎</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">系统</div>
+    <div class="nav-item" onclick="nav('memory')"><span class="ni-icon">🗃️</span> 记忆</div>
+    <div class="nav-item" onclick="nav('settings')"><span class="ni-icon">⚙</span> 设置</div>
+  </div>
+
+  <div class="nav-footer">
+    <div class="agent-pill">
+      <div class="agent-pill-av">🦞</div>
+      <div>
+        <div class="agent-pill-name">龙虾</div>
+        <div class="agent-pill-state" id="nav-state">待命中</div>
+      </div>
+      <div class="status-dot"></div>
     </div>
-    <div class="cb">
-      <div class="ag-row main">
-        <div class="ag-ava">🦞</div>
-        <div class="ag-inf"><div class="ag-n">龙虾</div><div class="ag-r" id="ag-main-r">调度 · 策略 · 对话</div></div>
-        <div class="ag-rt"><div class="stb st-on">Online</div><div class="ag-mdl">Sonnet 4-6</div></div>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="tb-breadcrumb">
+      <span class="tb-title" id="tb-title">总览</span>
+      <span class="tb-sep">/</span>
+      <span class="tb-sub" id="tb-sub">AI Trading Command Center</span>
+    </div>
+    <div class="tb-right">
+      <span id="clk">--:--:--</span>
+      <div class="status-pill">
+        <div class="dot"></div>
+        <span id="tb-state">待命中</span>
       </div>
-      <div class="ag-row">
-        <div class="ag-ava">🐝</div>
-        <div class="ag-inf"><div class="ag-n">工蜂</div><div class="ag-r">数据 · 脚本 · AkShare</div></div>
-        <div class="ag-rt"><div class="stb st-sb">Standby</div><div class="ag-mdl">DS-V3</div></div>
+    </div>
+  </div>
+
+  <!-- ══ OVERVIEW ══ -->
+  <div class="page active" id="p-overview">
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">总资产</div>
+        <div class="kpi-value" id="k-total">--</div>
+        <div class="kpi-sub ac" id="k-pnl">--</div>
       </div>
-      <div class="ag-row">
-        <div class="ag-ava">🦉</div>
-        <div class="ag-inf"><div class="ag-n">猫头鹰</div><div class="ag-r">深度研究 · 报告</div></div>
-        <div class="ag-rt"><div class="stb st-sb">Standby</div><div class="ag-mdl">Sonnet 4-6</div></div>
+      <div class="kpi">
+        <div class="kpi-label">胜率</div>
+        <div class="kpi-value">44%</div>
+        <div class="kpi-sub ac">目标 99%</div>
       </div>
-      <div class="ag-row">
-        <div class="ag-ava">📡</div>
-        <div class="ag-inf"><div class="ag-n">播报员</div><div class="ag-r">飞书推送 · 日报</div></div>
-        <div class="ag-rt"><div class="stb st-on">Online</div><div class="ag-mdl">DS-V3</div></div>
+      <div class="kpi">
+        <div class="kpi-label">活跃信号</div>
+        <div class="kpi-value" id="k-sig">T001</div>
+        <div class="kpi-sub up">🔴 CRITICAL</div>
       </div>
-      <div class="ag-row">
-        <div class="ag-ava">🦝</div>
-        <div class="ag-inf"><div class="ag-n">小熊猫</div><div class="ag-r">视觉 · 辅助</div></div>
-        <div class="ag-rt"><div class="stb st-off">Offline</div><div class="ag-mdl">DS-V3</div></div>
+      <div class="kpi">
+        <div class="kpi-label">持仓</div>
+        <div class="kpi-value" id="k-pos">--</div>
+        <div class="kpi-sub">模拟盘</div>
       </div>
-      <!-- 任务队列 -->
-      <div style="margin-top:auto;padding-top:11px;border-top:1px solid var(--border);">
-        <div class="sl">近期任务</div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-          <div style="display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.12);">
-            <span style="font-size:10px">✅</span>
-            <span style="font-size:10px;color:var(--t2);flex:1">全球信号扫描</span>
-            <span style="font-size:9px;color:var(--green);font-family:monospace">DONE</span>
+    </div>
+
+    <div class="row">
+      <div class="col col-2">
+        <!-- SIGNALS -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <div class="card-icon">📡</div>
+              <span class="card-title">活跃信号</span>
+            </div>
+            <span class="card-meta" id="ov-sig-upd">--</span>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);">
-            <span style="font-size:10px">⏳</span>
-            <span style="font-size:10px;color:var(--t2);flex:1">周一盘前SOP</span>
-            <span style="font-size:9px;color:var(--accent);font-family:monospace">PENDING</span>
+          <div class="card-body" id="ov-sig"></div>
+        </div>
+
+        <!-- PLAN -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <div class="card-icon">🎯</div>
+              <span class="card-title">待执行计划</span>
+            </div>
+            <span class="card-meta" id="ov-plan-cnt">--</span>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid var(--border);">
-            <span style="font-size:10px">🕐</span>
-            <span style="font-size:10px;color:var(--t3);flex:1">苗头信号周报</span>
-            <span style="font-size:9px;color:var(--t3);font-family:monospace">SUN 21:00</span>
+          <div class="card-body" id="ov-plan"></div>
+        </div>
+
+        <!-- MARKET SNAPSHOT -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <div class="card-icon">🌐</div>
+              <span class="card-title">市场快照</span>
+            </div>
+            <span class="card-meta">实时</span>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+              <div style="padding:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);">
+                <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">上证指数</div>
+                <div style="font-size:14px;font-weight:600;color:var(--t0);font-family:'JetBrains Mono',monospace;">3,421</div>
+                <div style="font-size:10px;color:var(--green);margin-top:2px;">-0.32%</div>
+              </div>
+              <div style="padding:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);">
+                <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">北向资金</div>
+                <div style="font-size:14px;font-weight:600;color:var(--red);font-family:'JetBrains Mono',monospace;">-12.3亿</div>
+                <div style="font-size:10px;color:var(--t3);margin-top:2px;">今日流出</div>
+              </div>
+              <div style="padding:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);">
+                <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">VIX</div>
+                <div style="font-size:14px;font-weight:600;color:var(--amber);font-family:'JetBrains Mono',monospace;">18.4</div>
+                <div style="font-size:10px;color:var(--red);margin-top:2px;">+2.1%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <!-- GOALS -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <div class="card-icon">🏆</div>
+              <span class="card-title">目标追踪</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="section-label">胜率进化</div>
+            <div class="prog"><div class="prog-header"><span class="prog-name">当前胜率</span><span class="prog-val">44%</span></div><div class="prog-track"><div class="prog-fill pf-amber" style="width:44%"></div></div></div>
+            <div class="prog"><div class="prog-header"><span class="prog-name">合作词样本</span><span class="prog-val">7/50</span></div><div class="prog-track"><div class="prog-fill pf-ac" style="width:14%"></div></div></div>
+            <div class="prog"><div class="prog-header"><span class="prog-name">触发器验证</span><span class="prog-val">1/25</span></div><div class="prog-track"><div class="prog-fill pf-green" style="width:4%"></div></div></div>
+            <div class="prog"><div class="prog-header"><span class="prog-name">模拟盘胜率</span><span class="prog-val">56%</span></div><div class="prog-track"><div class="prog-fill pf-blue" style="width:56%"></div></div></div>
+            <div style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;padding:5px 8px;border-radius:var(--r-sm);background:var(--bg2);border:1px solid var(--border);margin-top:2px;">44% → 65% → 80% → 99%</div>
+            <div class="divider"></div>
+            <div class="section-label">铁律</div>
+            <div class="rule-item"><span>📋</span><span style="flex:1">持仓前读 portfolio.json</span><span class="rule-status rule-ok">✓ 遵守</span></div>
+            <div class="rule-item"><span>📉</span><span style="flex:1">大盘 &lt;-2% 禁止建仓</span><span class="rule-status rule-ok">✓ 遵守</span></div>
+            <div class="rule-item"><span>🕊️</span><span style="flex:1">停火 → 立刻止盈</span><span class="rule-status rule-na">— 待触发</span></div>
+            <div class="rule-item"><span>✈️</span><span style="flex:1">T001：航线实质中断才触发</span><span class="rule-status rule-ok">✓ 遵守</span></div>
+            <div class="divider"></div>
+            <div class="section-label">AI 公司状态</div>
+            <div class="rule-item">
+              <div style="width:24px;height:24px;border-radius:5px;background:linear-gradient(135deg,#4f35c0,#7c5cfc);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;">龙</div>
+              <span style="flex:1">龙虾 — 调度</span><span class="st st-on">Online</span>
+            </div>
+            <div class="rule-item">
+              <div style="width:24px;height:24px;border-radius:5px;background:linear-gradient(135deg,#14532d,#22c55e);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;">蜂</div>
+              <span style="flex:1">工蜂 — 数据</span><span class="st st-sb">Standby</span>
+            </div>
+            <div class="rule-item">
+              <div style="width:24px;height:24px;border-radius:5px;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;">鹰</div>
+              <span style="flex:1">猫头鹰 — 研究</span><span class="st st-sb">Standby</span>
+            </div>
+            <div class="rule-item">
+              <div style="width:24px;height:24px;border-radius:5px;background:linear-gradient(135deg,#7c2d12,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;">播</div>
+              <span style="flex:1">播报员 — 推送</span><span class="st st-on">Online</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 中下：计划 -->
-  <div class="card" id="cpl">
-    <div class="ch">
-      <div class="ct-wrap"><div class="ci g">🎯</div><span class="cl">待执行计划</span></div>
-      <span class="cm-sub" id="plan-cnt">-- 项</span>
+  <!-- ══ PORTFOLIO ══ -->
+  <div class="page" id="p-portfolio">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">总资产</div><div class="kpi-value" id="pf-total">--</div><div class="kpi-sub" id="pf-pnl">--</div></div>
+      <div class="kpi"><div class="kpi-label">现金</div><div class="kpi-value" id="pf-cash">--</div><div class="kpi-sub">可用</div></div>
+      <div class="kpi"><div class="kpi-label">持仓市值</div><div class="kpi-value" id="pf-mkt">--</div><div class="kpi-sub">全部持仓</div></div>
+      <div class="kpi"><div class="kpi-label">初始资金</div><div class="kpi-value">100万</div><div class="kpi-sub">模拟盘</div></div>
     </div>
-    <div class="cb">
-      <div id="plan-c"><div class="empty">加载中...</div></div>
-      <!-- 市场快照 -->
-      <div style="margin-top:auto;padding-top:11px;border-top:1px solid var(--border);">
-        <div class="sl">市场快照</div>
-        <div class="mkt-row" id="mkt-snap">
-          <div class="mkt-box"><div class="mkt-l">上证指数</div><div class="mkt-v" style="color:var(--green)">3,407</div></div>
-          <div class="mkt-box"><div class="mkt-l">北向资金</div><div class="mkt-v" style="color:var(--red)">+23亿</div></div>
-          <div class="mkt-box"><div class="mkt-l">VIX</div><div class="mkt-v" style="color:var(--amber)">28.4</div></div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-wrap"><div class="card-icon">📋</div><span class="card-title">持仓明细</span></div>
+        <span class="card-meta" id="pf-upd">--</span>
+      </div>
+      <div class="card-body">
+        <div class="tbl-head" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;">
+          <span>股票</span><span>持仓量</span><span>成本</span><span>收盘</span><span>盈亏%</span><span>信号分</span>
+        </div>
+        <div id="pf-table"><div class="empty">加载中...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SIGNALS ══ -->
+  <div class="page" id="p-signals">
+    <div class="row">
+      <div class="col col-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">🚨</div><span class="card-title">当前信号</span></div><span class="card-meta" id="sig-upd">--</span></div>
+          <div class="card-body" id="sig-main"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">🎯</div><span class="card-title">执行计划</span></div><span class="card-meta" id="sig-plan-cnt">--</span></div>
+          <div class="card-body" id="sig-plan"></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">🔮</div><span class="card-title">三层共振</span></div></div>
+          <div class="card-body" id="sig-res"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 右下：目标&铁律 -->
-  <div class="card" id="cm">
-    <div class="ch">
-      <div class="ct-wrap"><div class="ci a">⚡</div><span class="cl">目标 &amp; 铁律</span></div>
-      <span class="cm-sub">ALL PASS</span>
+  <!-- ══ AGENTS ══ -->
+  <div class="page" id="p-agents">
+    <div class="agent-grid" id="ag-grid">
+      <div class="agent-card main">
+        <div class="agent-av" style="background:linear-gradient(135deg,#4f35c0,#7c5cfc);border-color:rgba(124,92,252,.3);">龙</div>
+        <div class="agent-body">
+          <div class="agent-name">龙虾</div>
+          <div class="agent-role">调度 · 策略 · 对话</div>
+          <div class="agent-model">claude-sonnet-4-6</div>
+          <div class="agent-footer"><span class="agent-task" id="ag-main-tk">待命中</span><span class="st st-on">Online</span></div>
+        </div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-av" style="background:linear-gradient(135deg,#14532d,#22c55e);border-color:rgba(34,197,94,.2);">蜂</div>
+        <div class="agent-body">
+          <div class="agent-name">工蜂</div>
+          <div class="agent-role">数据 · 脚本 · AkShare</div>
+          <div class="agent-model">deepseek-chat</div>
+          <div class="agent-footer"><span class="agent-task">数据管道</span><span class="st st-sb">Standby</span></div>
+        </div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-av" style="background:linear-gradient(135deg,#1e3a5f,#3b82f6);border-color:rgba(59,130,246,.2);">鹰</div>
+        <div class="agent-body">
+          <div class="agent-name">猫头鹰</div>
+          <div class="agent-role">深度研究 · 报告</div>
+          <div class="agent-model">claude-sonnet-4-6</div>
+          <div class="agent-footer"><span class="agent-task">宏观研究</span><span class="st st-sb">Standby</span></div>
+        </div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-av" style="background:linear-gradient(135deg,#7c2d12,#f59e0b);border-color:rgba(245,158,11,.2);">播</div>
+        <div class="agent-body">
+          <div class="agent-name">播报员</div>
+          <div class="agent-role">飞书推送 · 日报</div>
+          <div class="agent-model">deepseek-chat</div>
+          <div class="agent-footer"><span class="agent-task">推送就绪</span><span class="st st-on">Online</span></div>
+        </div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-av" style="background:linear-gradient(135deg,#292524,#78716c);">熊</div>
+        <div class="agent-body">
+          <div class="agent-name">小熊猫</div>
+          <div class="agent-role">视觉 · 辅助</div>
+          <div class="agent-model">deepseek-chat</div>
+          <div class="agent-footer"><span class="agent-task">--</span><span class="st st-off">Offline</span></div>
+        </div>
+      </div>
     </div>
-    <div class="cb">
-      <div class="sl">胜率进化路径</div>
-      <div class="prog-b"><div class="prog-h"><span class="prog-n">当前胜率</span><span class="prog-v">44%</span></div><div class="prog-t"><div class="prog-f pa" style="width:44%"></div></div></div>
-      <div class="prog-b"><div class="prog-h"><span class="prog-n">合作词样本</span><span class="prog-v">7 / 50</span></div><div class="prog-t"><div class="prog-f pc" style="width:14%"></div></div></div>
-      <div class="prog-b"><div class="prog-h"><span class="prog-n">触发器验证</span><span class="prog-v">1 / 25</span></div><div class="prog-t"><div class="prog-f pg" style="width:4%"></div></div></div>
-      <div class="prog-b"><div class="prog-h"><span class="prog-n">模拟盘胜率</span><span class="prog-v">56%</span></div><div class="prog-t"><div class="prog-f pp2" style="width:56%"></div></div></div>
-      <div class="target-p">44% → 65% → 70% → 80% → 90% → 99%</div>
-      <div class="sl">铁律检查</div>
-      <div class="rl-row"><span class="rl-ic">📋</span><span style="flex:1">持仓前读 portfolio.json</span><span class="rl-ok">✓ PASS</span></div>
-      <div class="rl-row"><span class="rl-ic">📉</span><span style="flex:1">大盘 &lt; -2% 禁建仓</span><span class="rl-ok">✓ PASS</span></div>
-      <div class="rl-row"><span class="rl-ic">🕊️</span><span style="flex:1">停火 → 立刻止盈</span><span class="rl-na">— 未触发</span></div>
-      <div class="rl-row"><span class="rl-ic">✈️</span><span style="flex:1">T001：航线中断才触发</span><span class="rl-ok">✓ 确认</span></div>
-      <div class="rl-row"><span class="rl-ic">🔖</span><span style="flex:1">推断必须标注【推断】</span><span class="rl-ok">✓ PASS</span></div>
+  </div>
+
+  <!-- ══ ACTIVITY ══ -->
+  <div class="page" id="p-activity">
+    <div class="row">
+      <div class="col col-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">⚡</div><span class="card-title">实时活动流</span></div><span class="card-meta">今日</span></div>
+          <div class="card-body">
+            <div class="feed-item"><div class="feed-dot" style="background:var(--red)"></div><div class="feed-body"><div class="feed-text">T001/T002 伊以战争信号激活 — 霍尔木兹封锁第3周，油运标的买入计划就绪</div><div class="feed-meta">09:00 · 🦞 龙虾</div></div></div>
+            <div class="feed-item"><div class="feed-dot" style="background:var(--ac)"></div><div class="feed-body"><div class="feed-text">AlphaWhisper扫描完成 — 发现3只合作词标的，胜率预估74%</div><div class="feed-meta">09:15 · 🐝 工蜂</div></div></div>
+            <div class="feed-item"><div class="feed-dot" style="background:var(--green)"></div><div class="feed-body"><div class="feed-text">周一买入计划生成 — 中远海控+招商轮船各10%，招商南油5%，等待开市自动执行</div><div class="feed-meta">09:28 · 🦞 龙虾</div></div></div>
+            <div class="feed-item"><div class="feed-dot" style="background:var(--blue)"></div><div class="feed-body"><div class="feed-text">全球信号扫描完毕 — 宏观触发器25条，T001确认极强，T025北向替代方案就绪</div><div class="feed-meta">15:30 · 🦉 猫头鹰</div></div></div>
+            <div class="feed-item"><div class="feed-dot" style="background:var(--amber)"></div><div class="feed-body"><div class="feed-text">苗头信号扫描 — PPI连续3月回升→有色/化工；两会政策落地→农资板块苗头确认</div><div class="feed-meta">21:00 · 🦉 猫头鹰</div></div></div>
+            <div class="feed-item"><div class="feed-dot" style="background:var(--green)"></div><div class="feed-body"><div class="feed-text">LobsterMC v2.0 启动 — 5个Agent在线，所有定时任务就绪</div><div class="feed-meta">23:52 · 🦞 龙虾</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">📊</div><span class="card-title">今日摘要</span></div></div>
+          <div class="card-body">
+            <div class="kpi-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+              <div class="kpi"><div class="kpi-label">事件数</div><div class="kpi-value" style="font-size:18px;">6</div></div>
+              <div class="kpi"><div class="kpi-label">Agent操作</div><div class="kpi-value" style="font-size:18px;">12</div></div>
+              <div class="kpi"><div class="kpi-label">信号触发</div><div class="kpi-value" style="font-size:18px;">2</div></div>
+              <div class="kpi"><div class="kpi-label">定时任务</div><div class="kpi-value" style="font-size:18px;">4</div></div>
+            </div>
+            <div class="section-label">Agent 活跃度</div>
+            <div class="bar-item"><span class="bar-name">🦞 龙虾</span><div class="bar-track"><div class="bar-fill" style="width:90%;background:var(--ac)"></div></div><span class="bar-val">90%</span></div>
+            <div class="bar-item"><span class="bar-name">🐝 工蜂</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--green)"></div></div><span class="bar-val">60%</span></div>
+            <div class="bar-item"><span class="bar-name">🦉 猫头鹰</span><div class="bar-track"><div class="bar-fill" style="width:45%;background:var(--blue)"></div></div><span class="bar-val">45%</span></div>
+            <div class="bar-item"><span class="bar-name">📡 播报员</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--amber)"></div></div><span class="bar-val">30%</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-</div><!-- /grid -->
-
-<!-- TICKER -->
-<div class="tkr">
-  <div class="tkr-in" id="tkr">
-    <span class="tki">中远海控 601919 <span class="u">+3.21%</span></span>
-    <span class="tki">招商轮船 601872 <span class="u">+2.87%</span></span>
-    <span class="tki">招商南油 601175 <span class="u">+1.54%</span></span>
-    <span class="tki">上证指数 <span class="d">-0.32%</span></span>
-    <span class="tki">深证成指 <span class="d">-0.18%</span></span>
-    <span class="tki">信号 T001/T002 <span class="n">ACTIVE · 伊以战争 · 极强</span></span>
-    <span class="tki">AlphaWhisper <span class="n">合作词胜率 74%</span></span>
-    <span class="tki">霍尔木兹 <span class="u">封锁第3周</span></span>
-    <span class="tki">模拟盘总资产 <span class="d">-2.3%</span></span>
-    <span class="tki">目标胜率 <span class="n">→ 99%</span></span>
-    <span class="tki">三层共振 <span class="n">满仓信号激活</span></span>
-    <span class="tki">中远海控 601919 <span class="u">+3.21%</span></span>
-    <span class="tki">招商轮船 601872 <span class="u">+2.87%</span></span>
-    <span class="tki">招商南油 601175 <span class="u">+1.54%</span></span>
-    <span class="tki">上证指数 <span class="d">-0.32%</span></span>
-    <span class="tki">深证成指 <span class="d">-0.18%</span></span>
-    <span class="tki">信号 T001/T002 <span class="n">ACTIVE · 伊以战争 · 极强</span></span>
-    <span class="tki">AlphaWhisper <span class="n">合作词胜率 74%</span></span>
-    <span class="tki">霍尔木兹 <span class="u">封锁第3周</span></span>
-    <span class="tki">模拟盘总资产 <span class="d">-2.3%</span></span>
-    <span class="tki">目标胜率 <span class="n">→ 99%</span></span>
-    <span class="tki">三层共振 <span class="n">满仓信号激活</span></span>
+  <!-- ══ COST ══ -->
+  <div class="page" id="p-cost">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">今日 Token</div><div class="kpi-value">184K</div><div class="kpi-sub ac">↑ vs 昨日</div></div>
+      <div class="kpi"><div class="kpi-label">今日费用</div><div class="kpi-value">$0.42</div><div class="kpi-sub">含所有模型</div></div>
+      <div class="kpi"><div class="kpi-label">本月累计</div><div class="kpi-value">$8.74</div><div class="kpi-sub">14天</div></div>
+      <div class="kpi"><div class="kpi-label">最耗 Agent</div><div class="kpi-value">🦞</div><div class="kpi-sub">龙虾 · 62%</div></div>
+    </div>
+    <div class="row">
+      <div class="col col-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">📈</div><span class="card-title">模型用量分布</span></div></div>
+          <div class="card-body">
+            <div class="section-label">按模型</div>
+            <div class="bar-item"><span class="bar-name">claude-sonnet-4-6</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--ac)"></div></div><span class="bar-val">132K</span></div>
+            <div class="bar-item"><span class="bar-name">deepseek-chat</span><div class="bar-track"><div class="bar-fill" style="width:28%;background:var(--blue)"></div></div><span class="bar-val">52K</span></div>
+            <div class="divider"></div>
+            <div class="section-label">按 Agent</div>
+            <div class="bar-item"><span class="bar-name">🦞 龙虾</span><div class="bar-track"><div class="bar-fill" style="width:62%;background:var(--ac)"></div></div><span class="bar-val">$0.26</span></div>
+            <div class="bar-item"><span class="bar-name">🦉 猫头鹰</span><div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--blue)"></div></div><span class="bar-val">$0.09</span></div>
+            <div class="bar-item"><span class="bar-name">🐝 工蜂</span><div class="bar-track"><div class="bar-fill" style="width:10%;background:var(--green)"></div></div><span class="bar-val">$0.04</span></div>
+            <div class="bar-item"><span class="bar-name">📡 播报员</span><div class="bar-track"><div class="bar-fill" style="width:6%;background:var(--amber)"></div></div><span class="bar-val">$0.03</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">💡</div><span class="card-title">优化建议</span></div></div>
+          <div class="card-body">
+            <div class="rule-item"><span>🔄</span><span style="flex:1">数据查询改用工蜂(DS-V3)，节省80%</span><span class="rule-status" style="color:var(--amber)">待执行</span></div>
+            <div class="rule-item"><span>📦</span><span style="flex:1">批量信号扫描合并为单次调用</span><span class="rule-status" style="color:var(--amber)">待执行</span></div>
+            <div class="rule-item"><span>💾</span><span style="flex:1">Cache常用数据，减少重复查询</span><span class="rule-status rule-na">评估中</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<!-- STATUSBAR -->
-<div id="sb">
-  <div class="sb-l">
-    <div class="sb-i"><div class="sb-dot" style="background:var(--green)"></div>SYSTEM <span class="sb-v">NOMINAL</span></div>
-    <div class="sb-i">AGENT <span class="sb-v" id="sb-ag">IDLE</span></div>
-    <div class="sb-i">SIGNAL <span class="sb-v" id="sb-sig">T001 ACTIVE</span></div>
-    <div class="sb-i">POS <span class="sb-v" id="sb-pos">--</span></div>
-    <div class="sb-i">TOTAL <span class="sb-v" id="sb-tot">--</span></div>
+  <!-- ══ TASKS ══ -->
+  <div class="page" id="p-tasks">
+    <div class="row">
+      <div class="col col-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">✅</div><span class="card-title">已完成</span></div><span class="card-meta">今日</span></div>
+          <div class="card-body">
+            <div class="task-row"><span class="task-icon">✅</span><span class="task-text">全球信号扫描 · T001/T002验证</span><span class="task-agent">🦞</span><span class="ts ts-done">DONE</span></div>
+            <div class="task-row"><span class="task-icon">✅</span><span class="task-text">AlphaWhisper扫描 · 发现3标的</span><span class="task-agent">🐝</span><span class="ts ts-done">DONE</span></div>
+            <div class="task-row"><span class="task-icon">✅</span><span class="task-text">苗头信号扫描 · PPI+地缘苗头确认</span><span class="task-agent">🦉</span><span class="ts ts-done">DONE</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">⏳</div><span class="card-title">待执行</span></div><span class="card-meta">计划中</span></div>
+          <div class="card-body">
+            <div class="task-row"><span class="task-icon">⏳</span><span class="task-text">周一盘前SOP · 买入计划自动执行</span><span class="task-agent">🦞</span><span class="ts ts-pd">MON 09:00</span></div>
+            <div class="task-row"><span class="task-icon">🕐</span><span class="task-text">苗头信号周报</span><span class="task-agent">🦉</span><span class="ts ts-wt">SUN 21:00</span></div>
+            <div class="task-row"><span class="task-icon">🕐</span><span class="task-text">北向资金盘后扫描</span><span class="task-agent">🐝</span><span class="ts ts-wt">WD 15:30</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">📊</div><span class="card-title">任务统计</span></div></div>
+          <div class="card-body">
+            <div class="kpi-grid" style="grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="kpi"><div class="kpi-label">今日完成</div><div class="kpi-value" style="font-size:18px;color:var(--green)">3</div></div>
+              <div class="kpi"><div class="kpi-label">待执行</div><div class="kpi-value" style="font-size:18px;color:var(--amber)">3</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="sb-r">
-    <div class="sb-i">🦞 LobsterMC v2.0 · AI Trading Command Center</div>
-  </div>
-</div>
 
-</div><!-- /app -->
+  <!-- ══ CRON ══ -->
+  <div class="page" id="p-cron">
+    <div class="card">
+      <div class="card-header"><div class="card-title-wrap"><div class="card-icon">🕐</div><span class="card-title">定时任务</span></div><span class="card-meta">5 个任务</span></div>
+      <div class="card-body">
+        <div class="cron-row"><span>🦞</span><span class="cron-name">周一盘前SOP</span><span class="cron-sched">MON 09:00</span><span class="st st-on">启用</span></div>
+        <div class="cron-row"><span>📡</span><span class="cron-name">全球信号自动决策</span><span class="cron-sched">WD 09:30~15:00 / 30m</span><span class="st st-on">启用</span></div>
+        <div class="cron-row"><span>🦉</span><span class="cron-name">盘前全球信号</span><span class="cron-sched">WD 09:00</span><span class="st st-on">启用</span></div>
+        <div class="cron-row"><span>🦉</span><span class="cron-name">苗头信号周报</span><span class="cron-sched">SUN 21:00</span><span class="st st-on">启用</span></div>
+        <div class="cron-row"><span>🐝</span><span class="cron-name">北向资金盘后扫描</span><span class="cron-sched">WD 15:30</span><span class="st st-on">启用</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STRATEGY ══ -->
+  <div class="page" id="p-strategy">
+    <div class="row">
+      <div class="col col-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">🧠</div><span class="card-title">三层策略系统</span></div><span class="badge badge-green">激活</span></div>
+          <div class="card-body">
+            <div class="res-item on"><span class="res-icon">🌊</span><div class="res-info"><div class="res-name on">第一层：苗头信号（聪明钱）</div><div class="res-detail">事件前3个月识别 · PPI+地缘苗头已确认 · 仓位5%</div></div><span class="badge badge-green">激活</span></div>
+            <div class="res-item on"><span class="res-icon">🌐</span><div class="res-info"><div class="res-name on">第二层：宏观触发器</div><div class="res-detail">T001/T002 伊以战争 · 霍尔木兹封锁 · 仓位10%</div></div><span class="badge badge-red">CRIT</span></div>
+            <div class="res-item on"><span class="res-icon">⚡</span><div class="res-info"><div class="res-name on">第三层：AlphaWhisper</div><div class="res-detail">合作词胜率72-78% · 油运板块3标的 · 仓位+5%</div></div><span class="badge badge-amber">HIGH</span></div>
+            <div class="res-total">
+              <div style="font-size:11px;color:var(--t1);">🎯 三层共振 — 最高确信度</div>
+              <span class="badge badge-ac">满仓 20%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title-wrap"><div class="card-icon">📐</div><span class="card-title">仓位规则</span></div></div>
+          <div class="card-body">
+            <div class="rule-item"><span>🌊</span><span style="flex:1">苗头触发（提前布局）</span><span class="rule-status" style="color:var(--blue)">5%</span></div>
+            <div class="rule-item"><span>🌐</span><span style="flex:1">宏观触发（方向确认）</span><span class="rule-status" style="color:var(--blue)">10%</span></div>
+            <div class="rule-item"><span>⚡</span><span style="flex:1">三层共振（最高确信度）</span><span class="rule-status" style="color:var(--ac)">20%</span></div>
+            <div class="rule-item"><span>🚫</span><span style="flex:1">大盘 &lt;-2% 禁止建仓</span><span class="rule-status rule-ok">铁律</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MEMORY ══ -->
+  <div class="page" id="p-memory">
+    <div class="card">
+      <div class="card-header"><div class="card-title-wrap"><div class="card-icon">🗃️</div><span class="card-title">长期记忆</span></div><span class="card-meta">MEMORY.md</span></div>
+      <div class="card-body">
+        <div class="section-label">里程碑</div>
+        <div class="rule-item"><span>🎯</span><span style="flex:1">合作词样本累积</span><span class="rule-status" style="color:var(--amber)">7/50</span></div>
+        <div class="rule-item"><span>🔬</span><span style="flex:1">宏观触发器验证</span><span class="rule-status" style="color:var(--amber)">1/25</span></div>
+        <div class="rule-item"><span>📊</span><span style="flex:1">历史交易记录</span><span class="rule-status" style="color:var(--blue)">25笔</span></div>
+        <div class="rule-item"><span>🏆</span><span style="flex:1">整体胜率目标</span><span class="rule-status" style="color:var(--ac)">44% → 99%</span></div>
+        <div class="divider"></div>
+        <div class="section-label">关键教训</div>
+        <div class="rule-item"><span>✈️</span><span style="flex:1">T001：航线实质中断才触发（哈马斯陆地≠油运信号）</span><span class="rule-status rule-ok">记住</span></div>
+        <div class="rule-item"><span>🕊️</span><span style="flex:1">停火后 -17.43%，停火=立刻止盈不等止损</span><span class="rule-status rule-ok">记住</span></div>
+        <div class="rule-item"><span>📈</span><span style="flex:1">高分(8+)≠高胜率，关键词堆砌假信号(44%)</span><span class="rule-status rule-ok">记住</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div class="page" id="p-settings">
+    <div class="card">
+      <div class="card-header"><div class="card-title-wrap"><div class="card-icon">⚙</div><span class="card-title">系统设置</span></div></div>
+      <div class="card-body">
+        <div class="section-label">数据源</div>
+        <div class="rule-item"><span>🔗</span><span style="flex:1">后端 API</span><span class="rule-status" style="color:var(--green)">127.0.0.1:19001</span></div>
+        <div class="rule-item"><span>🔄</span><span style="flex:1">自动刷新间隔</span><span class="rule-status" style="color:var(--blue)">30s</span></div>
+        <div class="rule-item"><span>📁</span><span style="flex:1">持仓文件</span><span class="rule-status" style="font-size:9px;color:var(--t2)">paper_trading/portfolio.json</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div id="ticker">
+    <div class="ticker-inner" id="tkr-inner">
+      <span class="tick-item"><span class="sym">中远海控</span> 601919 <span class="up">+3.24%</span></span>
+      <span class="tick-item"><span class="sym">招商轮船</span> 601872 <span class="up">+2.87%</span></span>
+      <span class="tick-item"><span class="sym">招商南油</span> 601175 <span class="up">+1.93%</span></span>
+      <span class="tick-item"><span class="sym">上证指数</span> 000001 <span class="dn">-0.32%</span></span>
+      <span class="tick-item"><span class="sym">深成指</span> 399001 <span class="dn">-0.18%</span></span>
+      <span class="tick-item"><span class="sym">创业板</span> 399006 <span class="up">+0.45%</span></span>
+      <span class="tick-item"><span class="sym">北向资金</span> 今日 <span class="dn">-12.3亿</span></span>
+      <span class="tick-item"><span class="sym">VIX</span> 18.4 <span class="up">+2.1%</span></span>
+      <span class="tick-item"><span class="sym">布伦特原油</span> $88.4 <span class="up">+1.6%</span></span>
+      <!-- duplicate for seamless loop -->
+      <span class="tick-item"><span class="sym">中远海控</span> 601919 <span class="up">+3.24%</span></span>
+      <span class="tick-item"><span class="sym">招商轮船</span> 601872 <span class="up">+2.87%</span></span>
+      <span class="tick-item"><span class="sym">招商南油</span> 601175 <span class="up">+1.93%</span></span>
+      <span class="tick-item"><span class="sym">上证指数</span> 000001 <span class="dn">-0.32%</span></span>
+      <span class="tick-item"><span class="sym">深成指</span> 399001 <span class="dn">-0.18%</span></span>
+      <span class="tick-item"><span class="sym">创业板</span> 399006 <span class="up">+0.45%</span></span>
+      <span class="tick-item"><span class="sym">北向资金</span> 今日 <span class="dn">-12.3亿</span></span>
+      <span class="tick-item"><span class="sym">VIX</span> 18.4 <span class="up">+2.1%</span></span>
+      <span class="tick-item"><span class="sym">布伦特原油</span> $88.4 <span class="up">+1.6%</span></span>
+    </div>
+  </div>
+
+</div><!-- #main -->
+</div><!-- #app -->
 
 <script>
-/* ── Particle Canvas ── */
+// ─── NAV ───
+const pages = {
+  overview:'总览', portfolio:'持仓', signals:'信号', agents:'AI公司',
+  activity:'活动流', cost:'Token用量', tasks:'任务队列',
+  cron:'定时任务', strategy:'策略引擎', memory:'记忆', settings:'设置'
+};
+function nav(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('p-' + id);
+  if (page) page.classList.add('active');
+  const items = document.querySelectorAll('.nav-item');
+  items.forEach(n => { if (n.getAttribute('onclick') === `nav('${id}')`) n.classList.add('active'); });
+  document.getElementById('tb-title').textContent = pages[id] || id;
+}
+
+// ─── CLOCK ───
+function tick() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clk').textContent = `${h}:${m}:${s}`;
+}
+setInterval(tick, 1000); tick();
+
+// ─── PARTICLE BG ───
 (function(){
-  const cv=document.getElementById('bgc'),ctx=cv.getContext('2d');
-  let W,H,pts=[];
-  const C=['rgba(0,212,255,','rgba(0,255,204,','rgba(168,85,247,'];
-  function rsz(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
-  rsz();window.addEventListener('resize',rsz);
-  for(let i=0;i<55;i++) pts.push({
-    x:Math.random()*2000,y:Math.random()*1400,
-    vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,
-    r:Math.random()*1.4+.3,
-    c:C[Math.floor(Math.random()*C.length)],
-    a:Math.random()*.35+.08
-  });
+  const c = document.getElementById('bgc');
+  const ctx = c.getContext('2d');
+  let W, H, pts;
+  function resize(){ W=c.width=innerWidth; H=c.height=innerHeight; }
+  function initPts(n=60){
+    pts=[];
+    for(let i=0;i<n;i++) pts.push({
+      x:Math.random()*W, y:Math.random()*H,
+      vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3
+    });
+  }
   function draw(){
     ctx.clearRect(0,0,W,H);
     pts.forEach(p=>{
-      p.x+=p.vx;p.y+=p.vy;
-      if(p.x<0||p.x>W)p.vx*=-1;
-      if(p.y<0||p.y>H)p.vy*=-1;
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle=p.c+p.a+')';ctx.fill();
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,1.2,0,Math.PI*2);
+      ctx.fillStyle='rgba(124,92,252,0.4)';
+      ctx.fill();
     });
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<110){
-        ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
-        ctx.strokeStyle=`rgba(0,212,255,${.035*(1-dist/110)})`;ctx.lineWidth=.5;ctx.stroke();
+    for(let i=0;i<pts.length;i++){
+      for(let j=i+1;j<pts.length;j++){
+        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<130){
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x,pts[i].y);
+          ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle=`rgba(124,92,252,${0.08*(1-d/130)})`;
+          ctx.lineWidth=.5;
+          ctx.stroke();
+        }
       }
     }
     requestAnimationFrame(draw);
   }
-  draw();
+  resize(); initPts(); draw();
+  window.addEventListener('resize', ()=>{ resize(); initPts(); });
 })();
 
-/* ── Clock ── */
-function tick(){
-  const n=new Date();
-  document.getElementById('clk').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
-}
-setInterval(tick,1000);tick();
+// ─── API FETCH ───
+async function fetchStatus() {
+  try {
+    const r = await fetch('/api/status');
+    if(!r.ok) return;
+    const d = await r.json();
 
-/* ── Helpers ── */
-const sign=p=>p>0?'+':'';
-const pnlCls=p=>p>0?'up':p<0?'dn':'fl';
+    // ── Portfolio ──
+    if(d.portfolio) {
+      const pf = d.portfolio;
+      const total = pf.total || 0;
+      const initial = pf.initial || 1000000;
+      const pnlPct = pf.pnl_pct || 0;
 
-/* ── Portfolio ── */
-function renderPF(pf){
-  if(!pf)return;
-  document.getElementById('pf-tot').textContent=(pf.total/10000).toFixed(2)+'万';
-  document.getElementById('pf-cash').textContent=(pf.cash/10000).toFixed(2)+'万';
-  document.getElementById('pf-upd').textContent=(pf.updated||'').substring(0,10);
-  document.getElementById('sb-tot').textContent=(pf.total/10000).toFixed(1)+'万';
-  const pe=document.getElementById('pf-pnl');
-  pe.textContent=sign(pf.pnl_pct)+pf.pnl_pct+'%  '+(pf.pnl_pct>=0?'▲':'▼')+' '+(Math.abs((pf.total-pf.initial)/10000).toFixed(2))+'万';
-  pe.className='pf-pnl '+pnlCls(pf.pnl_pct);
-  const pos=pf.positions||{},keys=Object.keys(pos);
-  document.getElementById('pf-cnt').textContent=keys.length+' 只';
-  document.getElementById('sb-pos').textContent=keys.length;
-  const el=document.getElementById('pf-pos');
-  if(!keys.length){el.innerHTML='<div class="empty">空仓中</div>';return;}
-  el.innerHTML=keys.map(code=>{
-    const p=pos[code];
-    return `<div class="pos">
-      <div><div class="pos-n">${p.name}</div><div class="pos-m">${code} · ${Math.floor((p.shares||0)/100)}手 · 成本${p.cost}</div></div>
-      <div><div class="pos-p ${pnlCls(p.pnl_pct)}">${sign(p.pnl_pct)}${p.pnl_pct}%</div><div class="pos-c">收${p.close||'--'}</div></div>
-    </div>`;
-  }).join('');
-}
+      document.getElementById('k-total').textContent = (total/10000).toFixed(1)+'万';
+      const kpnl = document.getElementById('k-pnl');
+      kpnl.textContent = (pnlPct>=0?'+':'')+pnlPct+'%';
+      kpnl.className = 'kpi-sub ' + (pnlPct>=0?'up':'dn');
 
-/* ── Signal + Resonance ── */
-function renderSIG(sig){
-  const el=document.getElementById('sig-c');
-  const cls=sig&&(sig.severity||'').toLowerCase().includes('critical')?'crit':'high';
-  document.getElementById('sig-upd').textContent=sig?(sig.updated||'').substring(0,10):'--';
-  document.getElementById('sb-sig').textContent=sig?(sig.id||'T001').replace(/_/g,' ').split(' ').slice(0,3).join('_'):'--';
+      // positions is an object { code: {...} }
+      const posObj = pf.positions || {};
+      const posList = Object.entries(posObj).map(([code, p]) => ({code, ...p}));
+      document.getElementById('k-pos').textContent = posList.length;
+      document.getElementById('nb-pos').textContent = posList.length;
 
-  const layers=[
-    {ic:'🔍',n:'苗头信号（聪明钱层）',d:'PPI回升+地缘苗头，提前3个月布局',on:!!sig},
-    {ic:'📡',n:'宏观触发（方向层）',d:'T001/T002 伊以战争 · 霍尔木兹第3周',on:!!sig},
-    {ic:'⚡',n:'AlphaWhisper（选股层）',d:'合作词胜率 74% · 找到3标的',on:!!sig},
-  ];
-  const tot=sig?3:0;
-  const resHTML=layers.map(l=>`
-    <div class="res-row ${l.on?'on':'off'}">
-      <span class="res-ic">${l.ic}</span>
-      <div class="res-info"><div class="res-name ${l.on?'on':'off'}">${l.n}</div><div class="res-desc">${l.d}</div></div>
-      <div class="res-dot ${l.on?'on':'off'}">${l.on?'● 激活':'○ 待机'}</div>
-    </div>`).join('')+
-  `<div class="res-total ${tot===3?'full':tot>=2?'part':'none'}">
-    <span class="res-tlabel">共振等级</span>
-    <span class="res-tval ${tot===3?'full':tot>=2?'part':'none'}">${tot}/3 · ${tot===3?'⚡ 满仓信号':tot>=2?'⚠ 半仓':'— 观望'}</span>
-  </div>`;
+      // Portfolio page KPIs
+      document.getElementById('pf-total').textContent = (total/10000).toFixed(1)+'万';
+      document.getElementById('pf-cash').textContent = (pf.cash/10000).toFixed(1)+'万';
+      document.getElementById('pf-mkt').textContent = ((total - pf.cash)/10000).toFixed(1)+'万';
+      const pnlEl = document.getElementById('pf-pnl');
+      pnlEl.textContent = (pnlPct>=0?'▲ +':'▼ ')+pnlPct+'%';
+      pnlEl.className = 'kpi-sub ' + (pnlPct>=0?'up':'dn');
+      document.getElementById('pf-upd').textContent = pf.updated || '--';
 
-  if(!sig){
-    el.innerHTML=`<div class="empty">暂无活跃信号</div><div style="margin-top:12px"><div class="sl">三层共振分析</div>${resHTML}</div>`;
-    return;
+      // Table rows
+      const rows = posList.map(p => {
+        const pnlP = p.pnl_pct || 0;
+        const cls = pnlP >= 0 ? 'red' : 'green';
+        return `<div class="tbl-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;">
+          <span style="color:var(--t0);font-family:'Inter',sans-serif;">${p.name||p.code}</span>
+          <span>${p.shares}</span>
+          <span>${(p.cost||0).toFixed(2)}</span>
+          <span>${(p.close||p.cost||0).toFixed(2)}</span>
+          <span style="color:var(--${cls})">${pnlP>=0?'+':''}${pnlP}%</span>
+          <span style="color:var(--ac)">${p.score||'--'}</span>
+        </div>`;
+      }).join('');
+      document.getElementById('pf-table').innerHTML = rows || '<div class="empty">暂无持仓</div>';
+    }
+
+    // ── Signal (singular key) ──
+    if(d.signal) {
+      const sig = d.signal;
+      document.getElementById('k-sig').textContent = (sig.id||'--').replace(/_/g,' ').substring(0,8);
+
+      const severity = sig.severity || 'HIGH';
+      const levelClass = severity === 'CRITICAL' ? 'crit' : 'high';
+      const badgeClass = severity === 'CRITICAL' ? 'badge-red' : 'badge-amber';
+
+      // Summary lines
+      const summaryLines = (sig.summary||[]).map(s=>`
+        <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px;color:var(--t1);">
+          <span style="color:var(--t3);flex-shrink:0;">›</span>${s}
+        </div>`).join('');
+
+      const sigHtml = `
+        <div class="signal-card ${levelClass}">
+          <div class="signal-top">
+            <span class="badge ${badgeClass}">${severity}</span>
+            <span class="signal-id">${sig.id||''}</span>
+          </div>
+          <div style="margin-top:6px;">${summaryLines}</div>
+        </div>`;
+      document.getElementById('ov-sig').innerHTML = sigHtml;
+      document.getElementById('ov-sig-upd').textContent = sig.updated ? sig.updated.substring(5,16) : '--';
+      document.getElementById('sig-main').innerHTML = sigHtml;
+      document.getElementById('sig-upd').textContent = sig.updated ? sig.updated.substring(5,16) : '--';
+
+      // Plans
+      const plans = sig.plans || [];
+      document.getElementById('ov-plan-cnt').textContent = plans.length + ' 个计划';
+      document.getElementById('sig-plan-cnt').textContent = plans.length + ' 个计划';
+      const planHtml = plans.map(p => {
+        const pctPct = p.pct ? Math.round(p.pct*100)+'%仓' : '--';
+        return `<div class="plan-item">
+          <div class="plan-top">
+            <div><span class="plan-name">${p.name||'--'}</span><span class="plan-code">${p.code||''}</span></div>
+            <span class="badge badge-ac">${pctPct}</span>
+          </div>
+          <div class="plan-prices">
+            <div class="price-cell"><div class="price-label">参考价</div><div class="price-value ref">${p.ref||'--'}</div></div>
+            <div class="price-cell"><div class="price-label">止盈</div><div class="price-value tp">${p.tp1||'--'}</div></div>
+            <div class="price-cell"><div class="price-label">止损</div><div class="price-value sl">${p.sl||'--'}</div></div>
+          </div>
+        </div>`;
+      }).join('') || '<div class="empty">无计划</div>';
+      document.getElementById('ov-plan').innerHTML = planHtml;
+      document.getElementById('sig-plan').innerHTML = planHtml;
+    }
+
+    // ── Resonance (always static + signal status) ──
+    const sigOn = !!d.signal;
+    const resHtml = `
+      <div class="res-item on"><span class="res-icon">🌊</span><div class="res-info"><div class="res-name on">苗头信号</div><div class="res-detail">PPI回升 · 地缘政治苗头确认</div></div><span class="badge badge-green">激活</span></div>
+      <div class="res-item ${sigOn?'on':'off'}"><span class="res-icon">🌐</span><div class="res-info"><div class="res-name ${sigOn?'on':'off'}">宏观触发器</div><div class="res-detail">${d.signal?.id||'T001/T002'} · 霍尔木兹封锁</div></div><span class="badge ${sigOn?'badge-red':'badge-ghost'}">${sigOn?'CRIT':'待触发'}</span></div>
+      <div class="res-item on"><span class="res-icon">⚡</span><div class="res-info"><div class="res-name on">AlphaWhisper</div><div class="res-detail">合作词胜率72~78% · 油运板块3标的</div></div><span class="badge badge-amber">HIGH</span></div>
+      <div class="res-total"><div style="font-size:11px;color:var(--t1);">🎯 三层共振 — 最高确信度</div><span class="badge badge-ac">满仓 20%</span></div>`;
+    document.getElementById('sig-res').innerHTML = resHtml;
+
+    // ── Agent state ──
+    if(d.agent) {
+      const state = d.agent.detail || d.agent.state || '待命中';
+      document.getElementById('nav-state').textContent = state;
+      document.getElementById('tb-state').textContent = state;
+      const mainTk = document.getElementById('ag-main-tk');
+      if(mainTk) mainTk.textContent = state;
+    }
+
+  } catch(e) {
+    console.warn('API fetch failed:', e);
   }
-  el.innerHTML=`
-    <div class="sig-banner ${cls}">
-      <div class="sig-top">
-        <span class="sig-badge ${cls}">${cls==='crit'?'🔴 CRITICAL':'🟠 HIGH'}</span>
-        <span class="sig-id">${(sig.id||'').replace(/_/g,' ').substring(0,30)}</span>
-      </div>
-    </div>
-    <div class="sl" style="margin-top:10px">事件摘要</div>
-    <div class="ev-list">${(sig.summary||[]).map((s,i)=>`
-      <div class="ev-row"><span class="ev-num">0${i+1}</span><span>${s}</span></div>`).join('')}
-    </div>
-    <div class="sl" style="margin-top:10px">三层共振分析</div>
-    ${resHTML}`;
 }
 
-/* ── Plan ── */
-function renderPlan(sig){
-  const el=document.getElementById('plan-c');
-  if(!sig||!(sig.plans||[]).length){el.innerHTML='<div class="empty">无待执行计划</div>';document.getElementById('plan-cnt').textContent='0 项';return;}
-  document.getElementById('plan-cnt').textContent=sig.plans.length+' 项';
-  el.innerHTML=sig.plans.map(p=>`
-    <div class="plan">
-      <div class="plan-top">
-        <div><span class="plan-n">${p.name}</span><span class="plan-code">${p.code}</span></div>
-        <div class="plan-pct">${((p.pct||0)*100).toFixed(0)}% 仓</div>
-      </div>
-      <div class="plan-ps">
-        <div class="pp"><div class="pp-l">参考价</div><div class="pp-v ref">${p.ref||'--'}</div></div>
-        <div class="pp"><div class="pp-l">止盈₁</div><div class="pp-v tp">${p.tp1||'--'}</div></div>
-        <div class="pp"><div class="pp-l">止损</div><div class="pp-v sl">${p.sl||'--'}</div></div>
-      </div>
-    </div>`).join('');
-}
-
-/* ── Agent ── */
-function renderAG(ag){
-  if(!ag)return;
-  document.getElementById('ag-st').textContent=ag.detail||'待命中';
-  document.getElementById('ag-main-r').textContent=ag.detail||'调度 · 策略 · 对话';
-  document.getElementById('sb-ag').textContent=(ag.state||'idle').toUpperCase();
-}
-
-/* ── Fetch ── */
-async function fetchAll(){
-  try{
-    const r=await fetch('/api/status?t='+Date.now(),{cache:'no-store'});
-    const d=await r.json();
-    if(!d.ok)return;
-    renderPF(d.portfolio);renderSIG(d.signal);renderPlan(d.signal);renderAG(d.agent);
-  }catch(e){console.warn(e);}
-}
-fetchAll();setInterval(fetchAll,30000);
+fetchStatus();
+setInterval(fetchStatus, 30000);
 </script>
 </body>
 </html>

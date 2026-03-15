@@ -1,198 +1,112 @@
-# 🦞 LobsterMC
+# 🦞 LobsterMC — AI Trading Command Center
 
-**The AI Trading Command Center for OpenClaw agent fleets.**
+> A mission control dashboard for AI trading agents. Built for quant traders who run their own AI company.
 
-> *Mission Control told you what your agents were doing. LobsterMC tells you what they're going to do — and whether to buy.*
+![LobsterMC Dashboard](docs/preview.png)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://python.org)
-[![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-00d4ff?logo=data:image/svg+xml;base64,)](https://openclaw.ai)
+## What is this?
 
-![LobsterMC Dashboard](docs/lobstermc-preview.png)
+LobsterMC is a real-time command center that visualizes your AI trading team, live signals, portfolio positions, and automation schedules — all in one dark-mode dashboard.
 
----
-
-## Why LobsterMC?
-
-Most AI dashboards show you agent status. LobsterMC goes further:
-
-| Feature | Mission Control | **LobsterMC** |
-|---------|----------------|---------------|
-| Agent monitoring | ✅ | ✅ |
-| Real-time signal detection | ❌ | ✅ |
-| 3-layer trading resonance | ❌ | ✅ |
-| Portfolio P&L tracking | ❌ | ✅ |
-| Cyberpunk visual design | ❌ | ✅ |
-| Particle network background | ❌ | ✅ |
-| Bloomberg-style ticker | ❌ | ✅ |
-| Win-rate evolution tracker | ❌ | ✅ |
-| Zero external dependencies | ❌ | ✅ |
-
----
+It's built for people who:
+- Run multiple AI agents for market research and trading
+- Want a Bloomberg-style interface for their quant system
+- Need to monitor signals, positions, and agent activity at a glance
 
 ## Features
 
-### 🎯 3-Layer Trading Resonance
-LobsterMC implements a unique three-layer signal system:
-- **Layer 1 — Whisper Signals**: Detect early indicators 3 months before events (geopolitics, policy, seasonal cycles)
-- **Layer 2 — Macro Triggers**: 25 global triggers mapped to A-share lag windows (e.g., oil shipping routes → tanker stocks)
-- **Layer 3 — AlphaWhisper**: Scrape investor Q&A platforms hours before retail traders notice → front-run at T+1
+- **📡 Live Signal Panel** — Critical/High severity signals with 3-layer resonance analysis
+- **📊 Portfolio Tracking** — Real-time P&L, positions, cost basis, signal scores
+- **🤖 AI Company** — Visualize your agent team (roles, models, online status)
+- **🧠 Strategy Engine** — 3-layer system: Early Warning → Macro Trigger → AlphaWhisper
+- **⚡ Activity Feed** — Real-time log of agent actions and decisions
+- **🕐 Cron Monitor** — View and track all scheduled automation jobs
+- **💰 Token Usage** — Cost breakdown by model and agent
+- **📋 Task Queue** — Completed and pending task tracking
+- **Bloomberg Ticker** — Live scrolling market data at the bottom
 
-When all 3 layers align: ⚡ **Full position signal**.
+## Screenshots
 
-### 🤖 AI Company Visualization
-Your agent fleet rendered as a living org chart — not a plain list:
-- **🦞 Lobster** (Claude Sonnet) — Strategy & orchestration, always online
-- **🐝 Worker Bee** (DeepSeek-V3) — Data pipelines & scripts
-- **🦉 Owl** (Claude Sonnet) — Deep research & reports
-- **📡 Broadcaster** (DeepSeek-V3) — Push notifications & daily briefings
-- **🦝 Red Panda** (DeepSeek-V3) — Vision & assist
+![Overview](docs/overview.png)
+![Signals](docs/signals.png)
+![AI Company](docs/agents.png)
 
-Each agent shows real-time status (Online / Standby / Offline), model, and current task.
+## Stack
 
-### 📊 Live Portfolio Dashboard
-- Real-time P&L tracking from your paper trading portfolio
-- Cost basis, position size, last close price per holding
-- Auto-refreshes every 30 seconds from `portfolio.json`
-
-### 📡 Signal Intelligence Panel
-- Active signal severity (🔴 CRITICAL / 🟠 HIGH)
-- Event summary feed with numbered entries
-- Real-time resonance layer status
-
-### 🎯 Execution Plan Board
-- Pending buy orders with entry price, TP1, and stop-loss
-- Position sizing as % of portfolio
-- Market snapshot (index / northbound flow / VIX)
-
-### ⚡ Mission Rules Checker
-- Win-rate evolution path: 44% → 65% → 70% → 80% → 90% → **99%**
-- Iron rules auto-checked on every load
-- Sample progress toward statistical significance
-
----
-
-## Design
-
-LobsterMC is built to look as good as it works:
-
-- **Particle network canvas** — 55 animated dots with connection lines, always drifting
-- **Neon glow orbs** — 3 radial gradient spheres in cyan/purple/teal, slowly breathing
-- **Grid overlay** — Subtle 48px cyberpunk grid
-- **Glass morphism cards** — `backdrop-filter: blur(20px)` with border glow
-- **Scan line** — Slow top-to-bottom sweep every 10 seconds
-- **Bloomberg ticker** — Bottom scrolling feed with color-coded price changes
-- **JetBrains Mono** — Monospace data, Inter for labels
-
-Color palette:
-```
-Background:  #020408  →  #060b12  →  #0a1020
-Accent:      #00d4ff (cyan)   #00ffcc (neon)
-Signal:      #ff4757 (red)    #ffd32a (amber)
-Profit:      #ff4757 (A-share red = up)
-Loss:        #00e676 (A-share green = down)
-```
-
----
+- **Frontend**: Pure HTML + CSS + Vanilla JS (single file, zero dependencies)
+- **Backend**: Python Flask
+- **Data**: Reads local JSON files (portfolio, signals, agent state)
+- **Design**: Linear/Vercel-inspired dark UI, particle canvas background
 
 ## Quick Start
 
-### Requirements
-- Python 3.10+
-- Flask (`pip install flask`)
-- OpenClaw workspace with `paper_trading/portfolio.json` *(optional — works without it)*
-
-### Run
-
 ```bash
+git clone https://github.com/1m1ai/LobsterMC
 cd LobsterMC/backend
 pip install flask
 python server.py
-# → http://127.0.0.1:19001
+# Open http://127.0.0.1:19001
 ```
-
-### With your own data
-
-LobsterMC reads from your OpenClaw workspace automatically. Place these files:
-
-```
-~/.openclaw/workspace/
-├── paper_trading/
-│   ├── portfolio.json    # Your positions
-│   └── monday_plan.json  # Pending buy orders
-└── Star-Office-UI/
-    └── state.json        # Agent current state
-```
-
-`portfolio.json` schema:
-```json
-{
-  "总资产": 977000,
-  "cash": 600000,
-  "初始资金": 1000000,
-  "最后更新": "2026-03-14",
-  "持仓": {
-    "002385": {
-      "名称": "大华股份",
-      "持仓数量": 1000,
-      "持仓成本": 18.5,
-      "收盘价": 17.2,
-      "信号分": 7
-    }
-  }
-}
-```
-
----
 
 ## Architecture
 
 ```
 LobsterMC/
+├── frontend/
+│   └── index.html          # Entire UI (single file)
 ├── backend/
-│   └── server.py          # Flask API — reads workspace files
-└── frontend/
-    └── index.html         # Single-file SPA — Canvas + CSS + JS
+│   └── server.py           # Flask API server (port 19001)
+└── docs/
+    └── preview.png
 ```
 
-Zero build step. No npm. No webpack. Just Python + one HTML file.
+### API
 
-The frontend polls `/api/status` every 30 seconds. The backend reads your local workspace files on each request. No database, no websocket setup required.
+The backend exposes one endpoint:
 
----
+```
+GET /api/status
+```
 
-## Roadmap
+Returns portfolio, active signals, execution plans, and agent state. Connect your own data sources by editing `server.py`.
 
-- [ ] Real-time A-share price feed (akshare integration)
-- [ ] WebSocket push instead of polling
-- [ ] Mobile responsive layout
-- [ ] Dark/light theme toggle
-- [ ] Multi-agent task queue panel
-- [ ] Historical signal backtest viewer
-- [ ] Export dashboard as PNG/PDF report
-- [ ] Docker one-liner deploy
+## Data Sources
 
----
+By default reads from:
+- `paper_trading/portfolio.json` — positions and P&L
+- `paper_trading/monday_plan.json` — signals and execution plans  
+- `Star-Office-UI/state.json` — agent status
 
-## Philosophy
+Swap these out for your own data pipeline.
 
-LobsterMC is built around one idea: **smart money enters before the crowd**.
+## The 3-Layer Strategy System
 
-The three-layer system is designed to find signals that:
-1. Exist 3 months before events materialize (whispers)
-2. Have a physical causation chain (global macro → A-share lag)
-3. Come from sources retail traders check 1–2 days too late (Q&A platforms)
+```
+Layer 1: Early Warning (Smart Money)
+  → Identify signals 3 months before events
+  → Entry at 5% position
 
-When all three align, that's not luck — that's edge.
+Layer 2: Macro Trigger
+  → 25 global trigger conditions
+  → Entry at 10% position
 
-**Target win rate: 99%.** We're at 44% now. Every session gets us closer.
+Layer 3: AlphaWhisper
+  → Intercept retail platform signals before the crowd
+  → Cooperation keywords: 72~78% win rate
 
----
+All 3 layers active → Full position (20%)
+```
+
+## Inspired By
+
+- [mission-control](https://github.com/builderz-labs/mission-control) — great concept, we went further
+- Bloomberg Terminal — the original trading UI
+- Linear, Vercel — modern dark design language
 
 ## License
 
-MIT © 2026 — Built with 🦞 by an AI agent fleet
+MIT
 
 ---
 
-*Inspired by [Mission Control](https://github.com/builderz-labs/mission-control). Differentiated by actual trading intelligence.*
+*Built by an AI trading team. For AI trading teams.*
