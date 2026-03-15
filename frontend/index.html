@@ -610,8 +610,8 @@ html, body { height:100%; background:var(--bg); color:var(--t1); font-family:'In
         <span class="card-meta" id="pf-upd">--</span>
       </div>
       <div class="card-body">
-        <div class="tbl-head" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;">
-          <span>股票</span><span>持仓量</span><span>成本</span><span>收盘</span><span>盈亏%</span><span>信号分</span>
+        <div class="tbl-head" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr;">
+          <span>股票</span><span>持仓量</span><span>成本</span><span>收盘</span><span>盈亏%</span><span>AW分</span><span>ML分</span>
         </div>
         <div id="pf-table"><div class="empty">加载中...</div></div>
       </div>
@@ -1015,13 +1015,17 @@ async function fetchStatus() {
       const rows = posList.map(p => {
         const pnlP = p.pnl_pct || 0;
         const cls = pnlP >= 0 ? 'red' : 'green';
-        return `<div class="tbl-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;">
+        const ml = p.ml_score;
+        const mlColor = ml == null ? 'var(--t3)' : ml >= 60 ? 'var(--green)' : ml >= 35 ? 'var(--amber)' : 'var(--red)';
+        const mlDisp = ml == null ? '--' : ml;
+        return `<div class="tbl-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr;">
           <span style="color:var(--t0);font-family:'Inter',sans-serif;">${p.name||p.code}</span>
           <span>${p.shares}</span>
           <span>${(p.cost||0).toFixed(2)}</span>
           <span>${(p.close||p.cost||0).toFixed(2)}</span>
           <span style="color:var(--${cls})">${pnlP>=0?'+':''}${pnlP}%</span>
           <span style="color:var(--ac)">${p.score||'--'}</span>
+          <span style="color:${mlColor};font-weight:600;">${mlDisp}</span>
         </div>`;
       }).join('');
       document.getElementById('pf-table').innerHTML = rows || '<div class="empty">暂无持仓</div>';
@@ -1061,16 +1065,26 @@ async function fetchStatus() {
       document.getElementById('sig-plan-cnt').textContent = plans.length + ' 个计划';
       const planHtml = plans.map(p => {
         const pctPct = p.pct ? Math.round(p.pct*100)+'%仓' : '--';
+        const ml = p.ml_score;
+        const mlColor = ml == null ? 'var(--t3)' : ml >= 60 ? 'var(--green)' : ml >= 35 ? 'var(--amber)' : 'var(--red)';
+        const mlText  = ml == null ? 'ML:--' : `ML:${ml}`;
+        const fac = p.ml_factors || {};
+        const decisionHtml = p.decision ? `<div style="margin-top:8px;padding:7px 10px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);font-size:10px;color:var(--t1);line-height:1.5;">${p.decision}</div>` : '';
         return `<div class="plan-item">
           <div class="plan-top">
             <div><span class="plan-name">${p.name||'--'}</span><span class="plan-code">${p.code||''}</span></div>
-            <span class="badge badge-ac">${pctPct}</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span style="font-size:10px;font-weight:700;color:${mlColor};font-family:'JetBrains Mono',monospace;">${mlText}</span>
+              <span class="badge badge-ac">${pctPct}</span>
+            </div>
           </div>
           <div class="plan-prices">
             <div class="price-cell"><div class="price-label">参考价</div><div class="price-value ref">${p.ref||'--'}</div></div>
             <div class="price-cell"><div class="price-label">止盈</div><div class="price-value tp">${p.tp1||'--'}</div></div>
             <div class="price-cell"><div class="price-label">止损</div><div class="price-value sl">${p.sl||'--'}</div></div>
           </div>
+          ${fac['量比'] != null ? `<div style="margin-top:6px;display:flex;gap:12px;font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;"><span>量比 ${fac['量比']}</span><span>动量 ${fac['动量5']}%</span><span>RSI ${fac['RSI']}</span></div>` : ''}
+          ${decisionHtml}
         </div>`;
       }).join('') || '<div class="empty">无计划</div>';
       document.getElementById('ov-plan').innerHTML = planHtml;
